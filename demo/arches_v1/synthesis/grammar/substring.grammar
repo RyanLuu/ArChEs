@@ -1,9 +1,9 @@
-﻿using semantics ProseTutorial.Semantics;
-using learners ProseTutorial.WitnessFunctions;
+﻿using semantics Arches.Semantics;
+using learners Arches.WitnessFunctions;
 
 language Substring;
 
-@complete feature double Score = ProseTutorial.RankingScore;
+@complete feature double Score = Arches.RankingScore;
 
 @input string v;
 

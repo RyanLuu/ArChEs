@@ -11,5 +11,8 @@
     <None Update="synthesis\grammar\substring.grammar">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="synthesis\grammar\substring %28copy%29.grammar">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>

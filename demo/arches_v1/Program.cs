@@ -11,7 +11,7 @@ using Microsoft.ProgramSynthesis.Learning.Strategies;
 using Microsoft.ProgramSynthesis.Specifications;
 using Microsoft.ProgramSynthesis.VersionSpace;
 
-namespace ProseTutorial
+namespace Arches 
 {
     internal class Program
     {

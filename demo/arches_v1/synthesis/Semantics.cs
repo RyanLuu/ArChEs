@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text.RegularExpressions;
 
-namespace ProseTutorial
+namespace Arches
 {
     public static class Semantics
     {
