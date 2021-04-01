@@ -1,0 +1,11 @@
+NOTE: `image` is still kinda ill-defined
+
+program ::= single
+single ::=  filterColor(single, color) 
+						| recolor(single, color)
+						| orthogonal(single, axis)            
+						| image
+color ::= 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+axis  ::= Y_AXIS | X_AXIS | XY_AXIS | YX_AXIS | ROT_90 | ROT_180 | ROT_270
+
+
