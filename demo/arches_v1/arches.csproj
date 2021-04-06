@@ -8,10 +8,12 @@
     <PackageReference Include="Microsoft.ProgramSynthesis.Compiler" Version="7.28.0" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="synthesis\grammar\substring.grammar">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="synthesis\grammar\substring %28copy%29.grammar">
+	<None Update="tasks\*">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	</None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="synthesis\grammar\arches.grammar">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

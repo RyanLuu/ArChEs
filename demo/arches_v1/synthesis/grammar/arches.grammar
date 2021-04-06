@@ -1,0 +1,17 @@
+using Arches;
+
+using semantics Arches.Semantics;
+using learners Arches.WitnessFunctions;
+
+language Arches;
+
+@complete feature double Score = Arches.RankingScore;
+
+@input Image input_image;
+
+@start Image program := single;
+
+Image single := FilterColor(input_image, color)
+              | Recolor(input_image, color);
+
+int color;

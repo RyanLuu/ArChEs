@@ -17,7 +17,7 @@ namespace Arches
     {
         private static readonly Grammar Grammar = DSLCompiler.Compile(new CompilerOptions
         {
-            InputGrammarText = File.ReadAllText("synthesis/grammar/substring.grammar"),
+            InputGrammarText = File.ReadAllText("synthesis/grammar/arches.grammar"),
             References = CompilerReference.FromAssemblyFiles(typeof(Program).GetTypeInfo().Assembly)
         }).Value;
 
@@ -47,15 +47,8 @@ namespace Arches
                     continue;
                 }
 
-                try
-                {
-                    RunOption(option);
-                }
-                catch (Exception e)
-                {
-                    Console.Error.WriteLine("Something went wrong...");
-                    Console.Error.WriteLine("Exception message: {0}", e.Message);
-                }
+                RunOption(option);
+                
             }
         }
 
@@ -77,50 +70,41 @@ namespace Arches
 
         private static void LearnFromNewExample()
         {
-            Console.Out.Write("Provide a new input-output example (e.g., \"(Sumit Gulwani)\",\"Gulwani\"): ");
-            try
+            Task task;
+            while (true)
             {
-                string input = Console.ReadLine();
-                if (input != null)
+                try
                 {
-                    int startFirstExample = input.IndexOf("\"", StringComparison.Ordinal) + 1;
-                    int endFirstExample = input.IndexOf("\"", startFirstExample + 1, StringComparison.Ordinal) + 1;
-                    int startSecondExample = input.IndexOf("\"", endFirstExample + 1, StringComparison.Ordinal) + 1;
-                    int endSecondExample = input.IndexOf("\"", startSecondExample + 1, StringComparison.Ordinal) + 1;
-
-                    if (startFirstExample >= endFirstExample || startSecondExample >= endSecondExample)
-                        throw new Exception(
-                            "Invalid example format. Please try again. input and out should be between quotes");
-
-                    string inputExample = input.Substring(startFirstExample, endFirstExample - startFirstExample - 1);
-                    string outputExample =
-                        input.Substring(startSecondExample, endSecondExample - startSecondExample - 1);
-
-                    int[] test = {4, 1, 2, 3};
-                    // int test = 34;
-                    State inputState = State.CreateForExecution(Grammar.InputSymbol, test);
-                    Examples.Add(inputState, 3);
+                    Console.Out.Write("Enter a task name: ");
+                    string taskName = Console.ReadLine().Trim();
+                    task = TaskLoader.LoadTask("tasks/" + taskName + ".json");
+                    break;
+                }
+                catch (Exception)
+                {
+                    Console.Out.WriteLine("Invalid task. Try again.");
                 }
             }
-            catch (Exception)
+            
+            Example[] train = task.train;
+            Console.Out.WriteLine("Learning a program for examples:");
+            foreach (Example example in train)
             {
-                throw new Exception("Invalid example format. Please try again. input and out should be between quotes");
+                Console.WriteLine(example);
+                State inputState = State.CreateForExecution(Grammar.InputSymbol, new Image(example.input));
+                Examples.Add(inputState, new Image(example.output));
             }
 
             var spec = new ExampleSpec(Examples);
-            Console.Out.WriteLine("Learning a program for examples:");
-            foreach (KeyValuePair<State, object> example in Examples)
-                Console.WriteLine("\"{0}\" -> \"{1}\"", example.Key.Bindings.First().Value, example.Value);
 
             var scoreFeature = new RankingScore(Grammar);
-            ProgramSet topPrograms = _prose.LearnGrammarTopK(spec, scoreFeature, 4, null);
-            if (topPrograms.IsEmpty) {
-                Console.WriteLine(spec);
+            int K = 4;
+            ProgramSet topPrograms = _prose.LearnGrammarTopK(spec, scoreFeature, K, null);
+            if (topPrograms.IsEmpty)
                 throw new Exception("No program was found for this specification.");
-            }
 
             _topProgram = topPrograms.RealizedPrograms.First();
-            Console.Out.WriteLine("Top 4 learned programs:");
+            Console.Out.WriteLine("Top " + K + " learned programs:");
             var counter = 1;
             foreach (ProgramNode program in topPrograms.RealizedPrograms)
             {
@@ -138,23 +122,9 @@ namespace Arches
                 throw new Exception("No program was synthesized. Try to provide new examples first.");
             Console.Out.WriteLine("Top program: {0}", _topProgram);
 
-            try
-            {
-                Console.Out.Write("Insert a new input: ");
-                string newInput = Console.ReadLine();
-                if (newInput != null)
-                {
-                    int startFirstExample = newInput.IndexOf("\"", StringComparison.Ordinal) + 1;
-                    int endFirstExample = newInput.IndexOf("\"", startFirstExample + 1, StringComparison.Ordinal) + 1;
-                    newInput = newInput.Substring(startFirstExample, endFirstExample - startFirstExample - 1);
-                    State newInputState = State.CreateForExecution(Grammar.InputSymbol, newInput);
-                    Console.Out.WriteLine("RESULT: \"{0}\" -> \"{1}\"", newInput, _topProgram.Invoke(newInputState));
-                }
-            }
-            catch (Exception)
-            {
-                throw new Exception("The execution of the program on this input thrown an exception");
-            }
+            Image newInput = new Image(new int[3, 3] { { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } });
+            State newInputState = State.CreateForExecution(Grammar.InputSymbol, newInput);
+            Console.Out.WriteLine("RESULT:\n{0} v \n{1}", newInput, _topProgram.Invoke(newInputState));
         }
 
         public static SynthesisEngine ConfigureSynthesis()

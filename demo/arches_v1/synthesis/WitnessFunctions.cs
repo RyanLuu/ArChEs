@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using Microsoft.ProgramSynthesis;
 using Microsoft.ProgramSynthesis.Learning;
 using Microsoft.ProgramSynthesis.Rules;
@@ -14,30 +13,34 @@ namespace Arches
         public WitnessFunctions(Grammar grammar) : base(grammar)
         {
         }
-
-        // We will use this set of regular expressions in this tutorial 
-        public static Regex[] UsefulRegexes =
-        {
-            new Regex(@"\w+"), // Word
-            new Regex(@"\d+"), // Number
-            new Regex(@"\s+"), // Space
-            new Regex(@".+"), // Anything
-            new Regex(@"$") // End of line
-        };
-
-        [WitnessFunction(nameof(Semantics.Substring), 1)]
-        public DisjunctiveExamplesSpec WitnessStartPosition(GrammarRule rule, ExampleSpec spec)
+            
+        [WitnessFunction(nameof(Semantics.FilterColor), 1)]
+        public DisjunctiveExamplesSpec WitnessFilterColor(GrammarRule rule, ExampleSpec spec)
         {
             var result = new Dictionary<State, IEnumerable<object>>();
 
             foreach (KeyValuePair<State, object> example in spec.Examples)
             {
                 State inputState = example.Key;
-                var input = inputState[rule.Body[0]] as string;
-                var output = example.Value as string;
+                var input = inputState[rule.Body[0]] as Image;
+                var output = example.Value as Image;
                 var occurrences = new List<int>();
 
-                for (int i = input.IndexOf(output); i >= 0; i = input.IndexOf(output, i + 1)) occurrences.Add(i);
+                var filterColor = 0;
+                for (int i = 0; i < output.data.Length; i++)
+                {
+                    if (output.data[i] != 0)
+                    {
+                        filterColor = output.data[i];
+                        break;
+                    }
+                }
+
+                if (filterColor == 0)
+                    for (int i = 1; i < 10; i++)
+                        occurrences.Add(i);  // all filters of a empty image are empty
+                else
+                    occurrences.Add(filterColor);  // any other filter of nonempty image will be different
 
                 if (occurrences.Count == 0) return null;
                 result[inputState] = occurrences.Cast<object>();
@@ -45,119 +48,38 @@ namespace Arches
             return new DisjunctiveExamplesSpec(result);
         }
 
-        [WitnessFunction(nameof(Semantics.Max), 1)]
-        public DisjunctiveExamplesSpec WitnessMaxStartPosition(GrammarRule rule, ExampleSpec spec) {
+        [WitnessFunction(nameof(Semantics.Recolor), 1)]
+        public DisjunctiveExamplesSpec WitnessRecolor(GrammarRule rule, ExampleSpec spec)
+        {
             var result = new Dictionary<State, IEnumerable<object>>();
 
-            foreach (KeyValuePair<State, object> example in spec.Examples) {
-                State inputState = example.Key;
-                var input = inputState[rule.Body[0]] as int[];
-                var outputNullable = example.Value as int?;
-                var output = outputNullable ?? default(int);
-                
-                var occurances = new List<int>();
-
-                for (int i = 0; i < input.Length; i++) {
-                    if (max(input, i) == output) occurances.Add(i);
-                }
-
-                if (occurances.Count == 0) return null;
-                result[inputState] = occurances.Cast<object>();
-            }
-            return new DisjunctiveExamplesSpec(result);
-        }
-
-        public int max(int[] arr, int start) {
-            int max = arr[start];
-            for (int i = start + 1; i < arr.Length; i++) {
-                if (arr[i] > max) max = arr[i];
-            }
-            return max;
-        }
-
-        [WitnessFunction(nameof(Semantics.Substring), 2, DependsOnParameters = new[] {1})]
-        public ExampleSpec WitnessEndPosition(GrammarRule rule, ExampleSpec spec, ExampleSpec startSpec)
-        {
-            var result = new Dictionary<State, object>();
             foreach (KeyValuePair<State, object> example in spec.Examples)
             {
                 State inputState = example.Key;
-                var output = example.Value as string;
-                var start = (int) startSpec.Examples[inputState];
-                result[inputState] = start + output.Length;
-            }
-            return new ExampleSpec(result);
-        }
+                var input = inputState[rule.Body[0]] as Image;
+                var output = example.Value as Image;
+                var occurrences = new List<int>();
 
-        [WitnessFunction(nameof(Semantics.AbsPos), 1)]
-        public DisjunctiveExamplesSpec WitnessK(GrammarRule rule, DisjunctiveExamplesSpec spec)
-        {
-            var kExamples = new Dictionary<State, IEnumerable<object>>();
-            foreach (KeyValuePair<State, IEnumerable<object>> example in spec.DisjunctiveExamples)
-            {
-                State inputState = example.Key;
-                var v = inputState[rule.Body[0]] as string;
-
-                var positions = new List<int>();
-                foreach (int pos in example.Value)
+                var newColor = 0;
+                for (int i = 0; i < output.data.Length; i++)
                 {
-                    positions.Add(pos + 1);
-                    positions.Add(pos - v.Length - 1);
+                    if (output.data[i] != 0)
+                    {
+                        newColor = output.data[i];
+                        break;
+                    }
                 }
-                if (positions.Count == 0) return null;
-                kExamples[inputState] = positions.Cast<object>();
-            }
-            return DisjunctiveExamplesSpec.From(kExamples);
-        }
 
-        [WitnessFunction(nameof(Semantics.RelPos), 1)]
-        public DisjunctiveExamplesSpec WitnessRegexPair(GrammarRule rule, DisjunctiveExamplesSpec spec)
-        {
-            var result = new Dictionary<State, IEnumerable<object>>();
-            foreach (KeyValuePair<State, IEnumerable<object>> example in spec.DisjunctiveExamples)
-            {
-                State inputState = example.Key;
-                var input = inputState[rule.Body[0]] as string;
+                if (newColor == 0)
+                    for (int i = 1; i < 10; i++)
+                        occurrences.Add(i);  // all filters of a empty image are empty
+                else
+                    occurrences.Add(newColor);  // any other filter of nonempty image will be different
 
-                var regexes = new List<Tuple<Regex, Regex>>();
-                foreach (int output in example.Value)
-                {
-                    List<Regex>[] leftMatches, rightMatches;
-                    BuildStringMatches(input, out leftMatches, out rightMatches);
-
-
-                    List<Regex> leftRegex = leftMatches[output];
-                    List<Regex> rightRegex = rightMatches[output];
-                    if (leftRegex.Count == 0 || rightRegex.Count == 0)
-                        return null;
-                    regexes.AddRange(from l in leftRegex
-                        from r in rightRegex
-                        select Tuple.Create(l, r));
-                }
-                if (regexes.Count == 0) return null;
-                result[inputState] = regexes;
+                if (occurrences.Count == 0) return null;
+                result[inputState] = occurrences.Cast<object>();
             }
-            return DisjunctiveExamplesSpec.From(result);
-        }
-        // out in function definition means:
-            // that variable MUST be set (either to null or something)
-            // It's a reference type
-        private static void BuildStringMatches(string inp, out List<Regex>[] leftMatches,
-            out List<Regex>[] rightMatches)
-        {
-            leftMatches = new List<Regex>[inp.Length + 1];
-            rightMatches = new List<Regex>[inp.Length + 1];
-            for (var p = 0; p <= inp.Length; ++p)
-            {
-                leftMatches[p] = new List<Regex>();
-                rightMatches[p] = new List<Regex>();
-            }
-            foreach (Regex r in UsefulRegexes)
-            foreach (Match m in r.Matches(inp))
-            {
-                leftMatches[m.Index + m.Length].Add(r);
-                rightMatches[m.Index].Add(r);
-            }
+            return new DisjunctiveExamplesSpec(result);
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Text.RegularExpressions;
 using Microsoft.ProgramSynthesis;
+using Microsoft.ProgramSynthesis.AST;
 using Microsoft.ProgramSynthesis.Features;
 
 namespace Arches
@@ -10,56 +10,28 @@ namespace Arches
         public RankingScore(Grammar grammar) : base(grammar, "Score")
         {
         }
+        protected override double GetFeatureValueForVariable(VariableNode variable) => 0;
 
-        [FeatureCalculator(nameof(Semantics.Substring))]
-        public static double Substring(double v, double start, double end)
+        [FeatureCalculator(nameof(Semantics.FilterColor))]
+        public static double FilterColor(double image, double color)
         {
-            return start * end;
+            return color;
         }
 
-        [FeatureCalculator(nameof(Semantics.Max))]
-        public static double Max(double v, double i) {
-            Console.WriteLine("scoring max");
-            return i;
+        [FeatureCalculator(nameof(Semantics.Recolor))]
+        public static double Recolor(double image, double color)
+        {
+            return color;
         }
 
-        [FeatureCalculator("i", Method = CalculationMethod.FromLiteral)]
-        public static double I(int i)
+        [FeatureCalculator("color", Method = CalculationMethod.FromLiteral)]
+        public static double Color(int color)
         {
-            Console.WriteLine("scoring i");
-            return 1.0 / Math.Abs(i);
-        }
-
-        [FeatureCalculator("j", Method = CalculationMethod.FromLiteral)]
-        public static double J(int j)
-        {
-            Console.WriteLine("scoring j");
-            if (j < 1) return Double.NegativeInfinity;
-            return j;
-        }
-
-        [FeatureCalculator(nameof(Semantics.AbsPos))]
-        public static double AbsPos(double v, double k)
-        {
-            return k;
-        }
-
-        [FeatureCalculator("k", Method = CalculationMethod.FromLiteral)]
-        public static double K(int k)
-        {
-            return 1.0 / Math.Abs(k);
-        }
-
-        [FeatureCalculator(nameof(Semantics.RelPos))]
-        public static double RelPos(double x, double rr)
-        {
-            return rr;
-        }
-
-        [FeatureCalculator("rr", Method = CalculationMethod.FromLiteral)]
-        public static double RR(Tuple<Regex, Regex> tuple)
-        {
-            return 1;
+            if (color < 0 || color > 9)
+            {
+                return Double.NegativeInfinity;
+            }
+            return 0.0;
         }
     }
 }
