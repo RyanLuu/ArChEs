@@ -96,8 +96,10 @@ namespace Arches
                     string outputExample =
                         input.Substring(startSecondExample, endSecondExample - startSecondExample - 1);
 
-                    State inputState = State.CreateForExecution(Grammar.InputSymbol, inputExample);
-                    Examples.Add(inputState, outputExample);
+                    int[] test = {4, 1, 2, 3};
+                    // int test = 34;
+                    State inputState = State.CreateForExecution(Grammar.InputSymbol, test);
+                    Examples.Add(inputState, 3);
                 }
             }
             catch (Exception)
@@ -112,8 +114,10 @@ namespace Arches
 
             var scoreFeature = new RankingScore(Grammar);
             ProgramSet topPrograms = _prose.LearnGrammarTopK(spec, scoreFeature, 4, null);
-            if (topPrograms.IsEmpty)
+            if (topPrograms.IsEmpty) {
+                Console.WriteLine(spec);
                 throw new Exception("No program was found for this specification.");
+            }
 
             _topProgram = topPrograms.RealizedPrograms.First();
             Console.Out.WriteLine("Top 4 learned programs:");

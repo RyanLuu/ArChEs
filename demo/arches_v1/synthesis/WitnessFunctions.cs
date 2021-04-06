@@ -45,6 +45,36 @@ namespace Arches
             return new DisjunctiveExamplesSpec(result);
         }
 
+        [WitnessFunction(nameof(Semantics.Max), 1)]
+        public DisjunctiveExamplesSpec WitnessMaxStartPosition(GrammarRule rule, ExampleSpec spec) {
+            var result = new Dictionary<State, IEnumerable<object>>();
+
+            foreach (KeyValuePair<State, object> example in spec.Examples) {
+                State inputState = example.Key;
+                var input = inputState[rule.Body[0]] as int[];
+                var outputNullable = example.Value as int?;
+                var output = outputNullable ?? default(int);
+                
+                var occurances = new List<int>();
+
+                for (int i = 0; i < input.Length; i++) {
+                    if (max(input, i) == output) occurances.Add(i);
+                }
+
+                if (occurances.Count == 0) return null;
+                result[inputState] = occurances.Cast<object>();
+            }
+            return new DisjunctiveExamplesSpec(result);
+        }
+
+        public int max(int[] arr, int start) {
+            int max = arr[start];
+            for (int i = start + 1; i < arr.Length; i++) {
+                if (arr[i] > max) max = arr[i];
+            }
+            return max;
+        }
+
         [WitnessFunction(nameof(Semantics.Substring), 2, DependsOnParameters = new[] {1})]
         public ExampleSpec WitnessEndPosition(GrammarRule rule, ExampleSpec spec, ExampleSpec startSpec)
         {

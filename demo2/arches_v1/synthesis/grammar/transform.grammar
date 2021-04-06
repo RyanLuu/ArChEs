@@ -1,12 +1,13 @@
 ﻿using semantics Arches.Semantics;
 using learners Arches.WitnessFunctions;
+using Arches;
 
-language Substring;
+language Transform;
 
 @complete feature double Score = Arches.RankingScore;
 
-@input int[] v;
+@input int[][] image;
 
-@start int program := Max(v, i);
+@start int[][] program := Recolor(image, color);
 
-int i;
+int color;

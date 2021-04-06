@@ -17,6 +17,27 @@ namespace Arches
             return start * end;
         }
 
+        [FeatureCalculator(nameof(Semantics.Max))]
+        public static double Max(double v, double i) {
+            Console.WriteLine("scoring max");
+            return i;
+        }
+
+        [FeatureCalculator("i", Method = CalculationMethod.FromLiteral)]
+        public static double I(int i)
+        {
+            Console.WriteLine("scoring i");
+            return 1.0 / Math.Abs(i);
+        }
+
+        [FeatureCalculator("j", Method = CalculationMethod.FromLiteral)]
+        public static double J(int j)
+        {
+            Console.WriteLine("scoring j");
+            if (j < 1) return Double.NegativeInfinity;
+            return j;
+        }
+
         [FeatureCalculator(nameof(Semantics.AbsPos))]
         public static double AbsPos(double v, double k)
         {

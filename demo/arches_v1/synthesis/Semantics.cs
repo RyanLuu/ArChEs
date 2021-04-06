@@ -5,6 +5,24 @@ namespace Arches
 {
     public static class Semantics
     {
+        public static int Max(int[] v, int start) {
+            Console.WriteLine("testing max");
+            int max = v[start];
+            for (int i = start + 1; i < v.Length; i++) {
+                if (v[i] > max) max = v[i];
+            }
+            return max;
+        }
+        public static int Add(int v) {
+            return v + 1;
+        }
+        public static int Sub(int v) {
+            return v - 1;
+        }
+
+        public static int First(int[] v) {
+            return v[0];
+        }
         public static string Substring(string v, int start, int end)
         {
             return v.Substring(start, end - start);
