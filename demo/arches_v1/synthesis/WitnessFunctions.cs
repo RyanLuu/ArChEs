@@ -36,11 +36,26 @@ namespace Arches
                     }
                 }
 
-                if (filterColor == 0)
-                    for (int i = 1; i < 10; i++)
-                        occurrences.Add(i);  // all filters of a empty image are empty
-                else
-                    occurrences.Add(filterColor);  // any other filter of nonempty image will be different
+                var filterValid = true;
+                for (int i = 0; i < output.data.Length; i++) {
+                    if (input.data[i] != filterColor && output.data[i] != 0) {
+                        filterValid = false;
+                        break;
+                    }
+                }
+
+                if (filterValid) 
+                {
+                    if (filterColor == 0)
+                    {
+                        for (int i = 1; i < 10; i++)
+                            occurrences.Add(i);  // all filters of a empty image are empty
+                    }
+                    else
+                    {
+                        occurrences.Add(filterColor);  // any other filter of nonempty image will be different
+                    }
+                }
 
                 if (occurrences.Count == 0) return null;
                 result[inputState] = occurrences.Cast<object>();
