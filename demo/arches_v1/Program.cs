@@ -24,6 +24,7 @@ namespace Arches
         private static SynthesisEngine _prose;
 
         private static readonly Dictionary<State, object> Examples = new Dictionary<State, object>();
+        private static string _taskName;
         private static ProgramNode _topProgram;
 
         private static void Main(string[] args)
@@ -76,21 +77,31 @@ namespace Arches
                 try
                 {
                     Console.Out.Write("Enter a task name: ");
-                    string taskName = Console.ReadLine().Trim();
-                    task = TaskLoader.LoadTask("tasks/" + taskName + ".json");
+                    _taskName = Console.ReadLine().Trim();
+                    task = TaskLoader.LoadTask("tasks/" + _taskName + ".json");
                     break;
+                }
+                catch (FileNotFoundException)
+                {
+                    Console.Out.WriteLine("Could not find task "+ _taskName + ".json. Try again.");
+                }
+                catch (DirectoryNotFoundException)
+                {
+                    Console.Out.WriteLine("Could not find task " + _taskName + ".json. Try again.");
                 }
                 catch (Exception)
                 {
-                    Console.Out.WriteLine("Invalid task. Try again.");
+                    Console.Out.WriteLine("Unable to parse " + _taskName + ".json. Try again.");
                 }
+
             }
             
             Example[] train = task.train;
             Console.Out.WriteLine("Learning a program for examples:");
+            Examples.Clear();
             foreach (Example example in train)
             {
-                Console.WriteLine(example);
+                example.Print();
                 State inputState = State.CreateForExecution(Grammar.InputSymbol, new Image(example.input));
                 Examples.Add(inputState, new Image(example.output));
             }
@@ -101,30 +112,51 @@ namespace Arches
             int K = 4;
             ProgramSet topPrograms = _prose.LearnGrammarTopK(spec, scoreFeature, K, null);
             if (topPrograms.IsEmpty)
-                throw new Exception("No program was found for this specification.");
-
-            _topProgram = topPrograms.RealizedPrograms.First();
-            Console.Out.WriteLine("Top " + K + " learned programs:");
-            var counter = 1;
-            foreach (ProgramNode program in topPrograms.RealizedPrograms)
             {
-                if (counter > 4) break;
-                Console.Out.WriteLine("==========================");
-                Console.Out.WriteLine("Program {0}: ", counter);
-                Console.Out.WriteLine(program.PrintAST(ASTSerializationFormat.HumanReadable));
-                counter++;
+                Console.Out.WriteLine("No program was found for this specification.");
+            }
+            else
+            {
+                _topProgram = topPrograms.RealizedPrograms.First();
+                Console.Out.WriteLine("Top " + K + " learned programs:");
+                var counter = 1;
+                foreach (ProgramNode program in topPrograms.RealizedPrograms)
+                {
+                    if (counter > 4) break;
+                    Console.Out.WriteLine("==========================");
+                    Console.Out.WriteLine("Program {0}: ", counter);
+                    Console.Out.WriteLine(program.PrintAST(ASTSerializationFormat.HumanReadable));
+                    counter++;
+                }
             }
         }
 
         private static void RunOnNewInput()
         {
             if (_topProgram == null)
-                throw new Exception("No program was synthesized. Try to provide new examples first.");
+            {
+                Console.Out.WriteLine("No program was synthesized. Try to provide new examples first.");
+                return;
+            }
             Console.Out.WriteLine("Top program: {0}", _topProgram);
+            Console.Out.WriteLine("Task: {0}", _taskName);
+            Task task;
+            task = TaskLoader.LoadTask("tasks/" + _taskName + ".json");
 
-            Image newInput = new Image(new int[3, 3] { { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } });
-            State newInputState = State.CreateForExecution(Grammar.InputSymbol, newInput);
-            Console.Out.WriteLine("RESULT:\n{0} v \n{1}", newInput, _topProgram.Invoke(newInputState));
+            Example[] test = task.test;
+            foreach (Example example in test)
+            {
+                Console.WriteLine("EXPECTED:");
+                example.Print();
+                Image newInput = new Image(example.input);
+                State newInputState = State.CreateForExecution(Grammar.InputSymbol, newInput);
+                Example result = new Example();
+                result.input = newInput.toArray();
+                result.output = (_topProgram.Invoke(newInputState) as Image).toArray();
+
+                Console.Out.WriteLine("RESULT:");
+                result.Print();
+            }
         }
 
         public static SynthesisEngine ConfigureSynthesis()

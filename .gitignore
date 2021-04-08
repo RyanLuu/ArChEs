@@ -2,5 +2,3 @@ demo/*/bin
 demo/*/obj
 demo/*.vs/*
 demo/*.vscode/*
-.vscode
-

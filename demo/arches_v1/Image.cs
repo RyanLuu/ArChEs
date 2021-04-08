@@ -2,7 +2,7 @@ using System;
 
 namespace Arches
 {
-	public class Image
+	public class Image : ICloneable
     {
         public int x, y;
         public int w, h;
@@ -16,6 +16,7 @@ namespace Arches
             this.h = h;
             this.data = new int[w * h];
         }
+
 
         public Image(int[,] array)
         {
@@ -58,6 +59,56 @@ namespace Arches
                 }
             }
             return s;
+        }
+
+        #region ICloneable Members
+        public object Clone()
+        {
+            return this.MemberwiseClone();
+        }
+        
+        #endregion
+
+        public int[,] toArray()
+        {
+            int[,] ret = new int[h, w];
+            int k = 0;
+            for (int i = 0; i < h; i++)
+            {
+                for (int j = 0; j < w; j++)
+                {
+                    ret[i, j] = data[k++];
+                }
+            }
+            return ret;
+        }
+
+        public static ConsoleColor colorMap(int color)
+        {
+            switch (color)
+            {
+                case 0:
+                default:
+                    return ConsoleColor.Black;
+                case 1:
+                    return ConsoleColor.DarkBlue;
+                case 2:
+                    return ConsoleColor.Red;
+                case 3:
+                    return ConsoleColor.Green;
+                case 4:
+                    return ConsoleColor.Yellow;
+                case 5:
+                    return ConsoleColor.Gray;
+                case 6:
+                    return ConsoleColor.Magenta;
+                case 7:
+                    return ConsoleColor.DarkYellow;
+                case 8:
+                    return ConsoleColor.Blue;
+                case 9:
+                    return ConsoleColor.DarkRed;
+            }
         }
     }
 }

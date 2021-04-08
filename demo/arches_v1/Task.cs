@@ -25,22 +25,38 @@ namespace Arches
     {
 		public int[,] input;
 		public int[,] output;
-		public override string ToString()
+
+		public void Print()
 		{
-			string s = "";
 			for (int i = 0; i <= Math.Max(input.GetUpperBound(0), output.GetUpperBound(0)); i++) {
 				for (int j = 0; j <= input.GetUpperBound(1); j++)
                 {
-					s += (input.GetUpperBound(0) >= i) ? input[i, j] : ' ';
+					if (input.GetUpperBound(0) >= i) {
+						Console.BackgroundColor = Image.colorMap(input[i, j]);
+						Console.Write(input[i, j]);
+					} else {
+						Console.ResetColor();
+						Console.Write(' ');
+					}
 				}
-				s += " > ";
+				Console.ResetColor();
+				Console.Write(" --> ");
 				for (int j = 0; j <= output.GetUpperBound(1); j++)
 				{
-					s += (output.GetUpperBound(0) >= i) ? output[i, j] : ' ';
+					if (input.GetUpperBound(0) >= i)
+					{
+						Console.BackgroundColor = Image.colorMap(output[i, j]);
+						Console.Write(output[i, j]);
+					}
+					else
+					{
+						Console.ResetColor();
+						Console.Write(' ');
+					}
 				}
-				s += '\n';
+				Console.ResetColor();
+				Console.WriteLine();
 			}
-			return s;
 		}
 	}
 }

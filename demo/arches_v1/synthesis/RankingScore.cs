@@ -15,13 +15,19 @@ namespace Arches
         [FeatureCalculator(nameof(Semantics.FilterColor))]
         public static double FilterColor(double image, double color)
         {
-            return color;
+            return image + color;
         }
 
         [FeatureCalculator(nameof(Semantics.Recolor))]
         public static double Recolor(double image, double color)
         {
-            return color;
+            return image + color;
+        }
+
+        [FeatureCalculator(nameof(Semantics.Origin))]
+        public static double Origin(double image)
+        {
+            return image;  // no penalty
         }
 
         [FeatureCalculator("color", Method = CalculationMethod.FromLiteral)]
@@ -31,7 +37,7 @@ namespace Arches
             {
                 return Double.NegativeInfinity;
             }
-            return 0.0;
+            return -1.0;
         }
     }
 }

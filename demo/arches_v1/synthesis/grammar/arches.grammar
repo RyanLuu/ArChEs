@@ -12,6 +12,7 @@ language Arches;
 @start Image program := single;
 
 Image single := FilterColor(input_image, color)
-              | Recolor(input_image, color);
+              | Recolor(input_image, color)
+              | Origin(single);
 
 int color;

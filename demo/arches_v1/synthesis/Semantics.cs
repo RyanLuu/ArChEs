@@ -25,5 +25,13 @@
 
             return output;
         }
+
+        public static Image Origin(Image image)
+        {
+            Image output = image.Clone() as Image;
+            output.x = 0;
+            output.y = 0;
+            return output;
+        }
     }
 }
