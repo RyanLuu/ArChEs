@@ -36,15 +36,15 @@ namespace Arches
                     }
                 }
 
-                var filterValid = true;
+                var isFilterValid = true;
                 for (int i = 0; i < output.data.Length; i++) {
                     if (input.data[i] != filterColor && output.data[i] != 0) {
-                        filterValid = false;
+                        isFilterValid = false;
                         break;
                     }
                 }
 
-                if (filterValid) 
+                if (isFilterValid) 
                 {
                     if (filterColor == 0)
                     {
