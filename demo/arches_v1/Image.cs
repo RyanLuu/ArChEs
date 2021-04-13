@@ -17,7 +17,6 @@ namespace Arches
             this.data = new int[w * h];
         }
 
-
         public Image(int[,] array)
         {
             this.x = 0;

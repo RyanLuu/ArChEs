@@ -13,7 +13,7 @@ namespace Arches
         public WitnessFunctions(Grammar grammar) : base(grammar)
         {
         }
-            
+
         [WitnessFunction(nameof(Semantics.FilterColor), 1)]
         public DisjunctiveExamplesSpec WitnessFilterColor(GrammarRule rule, ExampleSpec spec)
         {
@@ -25,6 +25,11 @@ namespace Arches
                 var input = inputState[rule.Body[0]] as Image;
                 var output = example.Value as Image;
                 var occurrences = new List<int>();
+
+                if (input.x != output.x || input.y != output.y || input.w != output.w || input.h != output.h)
+                {
+                    return null;
+                }
 
                 var filterColor = 0;
                 for (int i = 0; i < output.data.Length; i++)
@@ -75,21 +80,42 @@ namespace Arches
                 var output = example.Value as Image;
                 var occurrences = new List<int>();
 
-                var newColor = 0;
-                for (int i = 0; i < output.data.Length; i++)
+                if (input.x != output.x || input.y != output.y || input.w != output.w || input.h != output.h)
                 {
-                    if (output.data[i] != 0)
+                    return null;
+                }
+                int newColor = -1;
+                for (int i = 0; i < input.data.Length; i++)
+                {
+                    if (input.data[i] != 0)
                     {
-                        newColor = output.data[i];
-                        break;
+                        if (newColor == -1)
+                        {
+                            newColor = output.data[i];  // set newColor
+                        }
+                        else
+                        {
+                            if (output.data[i] != newColor)
+                            {
+                                return null;  // invalid recolor (map to multiple colors)
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (output.data[i] != 0)
+                        {
+                            return null;  // invalid recolor (zero -> nonzero)
+                        }
                     }
                 }
-
-                if (newColor == 0)
+                if (newColor == -1)
                     for (int i = 1; i < 10; i++)
-                        occurrences.Add(i);  // all filters of a empty image are empty
+                        occurrences.Add(i);  // all recolors of a empty image are empty
                 else
-                    occurrences.Add(newColor);  // any other filter of nonempty image will be different
+                    occurrences.Add(newColor);
+
+
 
                 if (occurrences.Count == 0) return null;
                 result[inputState] = occurrences.Cast<object>();
