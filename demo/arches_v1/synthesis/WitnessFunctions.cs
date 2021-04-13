@@ -176,10 +176,14 @@ namespace Arches
                         if (rot_90_check) { occurrences.Add(ROT_90); }
                     }
                 }
-                // else if, output dims don't correspond to the input dims, so definitely ROT_90
+                // else if, output dims don't correspond to the input dims, so probably ROT_90
                 else if (output.w == input.h && output.h == input.w)
                 {
-                    occurrences.Add(ROT_90);
+                    // TODO: Determine if there's a more efficient way to do this than literally 
+                    // running the function!
+                    if (Semantics.Orthogonal(input, ROT_90).Equals(output)) {
+                        occurrences.Add(ROT_90);
+                    }
                 }
                 // else... This means that there's some complete mismatch in input/output dimensions
                 // that can't have been the result of an orthogonal operation!
