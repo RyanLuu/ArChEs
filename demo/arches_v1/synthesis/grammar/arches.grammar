@@ -14,7 +14,7 @@ language Arches;
 Image single := FilterColor(single, color)
               | Recolor(single, color)
               | Orthogonal(single, orth_option)
-			  input_image;
+	      | input_image;
 
 int color;
 int orth_option;
