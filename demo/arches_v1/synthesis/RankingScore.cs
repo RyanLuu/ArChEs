@@ -24,6 +24,12 @@ namespace Arches
             return image + color;
         }
 
+        [FeatureCalculator(nameof(Semantics.Orthogonal))]
+        public static double Orthogonal(double image, double orth_option)
+        {
+            return image + orth_option;
+        }
+
         [FeatureCalculator(nameof(Semantics.Origin))]
         public static double Origin(double image)
         {
@@ -34,6 +40,17 @@ namespace Arches
         public static double Color(int color)
         {
             if (color < 0 || color > 9)
+            {
+                return Double.NegativeInfinity;
+            }
+            return -1.0;
+        }
+
+
+        [FeatureCalculator("orth_option", Method = CalculationMethod.FromLiteral)]
+        public static double OrthoOption(int orth_option)
+        {
+            if (orth_option < 0 || orth_option > 2) // currently, we only support 3 options
             {
                 return Double.NegativeInfinity;
             }
