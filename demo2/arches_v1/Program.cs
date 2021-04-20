@@ -36,18 +36,21 @@ namespace Arches
                     inputTest[2] = new int[] {4, 1, 1, 1, 1, 1};
                     inputTest[3] = new int[] {9, 8, 4, 3, 0, 0};
 
+            // expected program Recolor(image, 5)
             int[][] outputTest1 = new int[4][];
                     outputTest1[0] = new int[] {0, 5, 5, 0, 5, 5}; 
                     outputTest1[1] = new int[] {0, 0, 0, 0, 0, 0};
                     outputTest1[2] = new int[] {5, 5, 5, 5, 5, 5};
                     outputTest1[3] = new int[] {5, 5, 5, 5, 0, 0};
 
+            // expected program Filter(image, 2)
             int[][] outputTest2 = new int[4][];
                     outputTest2[0] = new int[] {0, 2, 2, 0, 0, 0}; 
                     outputTest2[1] = new int[] {0, 0, 0, 0, 0, 0};
                     outputTest2[2] = new int[] {0, 0, 0, 0, 0, 0};
                     outputTest2[3] = new int[] {0, 0, 0, 0, 0, 0};
 
+            // expected program Recolor(Filter(image, 2), 3)
             int[][] outputTest3 = new int[4][];
                     outputTest3[0] = new int[] {0, 3, 3, 0, 0, 0}; 
                     outputTest3[1] = new int[] {0, 0, 0, 0, 0, 0};
