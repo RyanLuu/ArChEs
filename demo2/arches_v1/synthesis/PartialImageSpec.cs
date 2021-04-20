@@ -17,13 +17,8 @@ namespace Arches {
 		}
         protected override bool CorrectOnProvided(State state, object output)
         {
-			// Console.Out.WriteLine((examples[state] as List<int[][]>).Count);
 			var space = (examples[state] as List<int[][]>)[0];
 			var candidate = output as int[][];
-			// Console.Out.WriteLine("space: ");
-			// print(space);
-			// Console.Out.WriteLine("Candidate: ");
-			// print(candidate);
 			for (int i = 0; i < space.Length; i++) {
 				for (int j = 0; j < space[0].Length; j++) {
 					if (space[i][j] == 10) {
