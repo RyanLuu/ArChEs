@@ -31,8 +31,8 @@ namespace Arches
         {
             _prose = ConfigureSynthesis();
             var menu = @"Select one of the options: 
-1 - provide new example
-2 - run top synthesized program on a new input
+1 - provide training task
+2 - run top synthesized program on test
 3 - exit";
             var option = 0;
             while (option != 3)
@@ -97,11 +97,12 @@ namespace Arches
             }
             
             Example[] train = task.train;
-            Console.Out.WriteLine("Learning a program for examples:");
+            Console.Out.WriteLine("Learning a program for examples:\n");
             Examples.Clear();
             foreach (Example example in train)
             {
                 example.Print();
+                Console.Out.WriteLine();
                 State inputState = State.CreateForExecution(Grammar.InputSymbol, new Image(example.input));
                 Examples.Add(inputState, new Image(example.output));
             }
@@ -128,6 +129,7 @@ namespace Arches
                     Console.Out.WriteLine(program.PrintAST(ASTSerializationFormat.HumanReadable));
                     counter++;
                 }
+                Console.Out.WriteLine("==========================");
             }
         }
 
