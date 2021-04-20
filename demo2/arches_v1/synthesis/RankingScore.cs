@@ -16,6 +16,12 @@ namespace Arches
             return color;
         }
 
+        [FeatureCalculator(nameof(Semantics.Filter))]
+        public static double Filter(double image, double color) {
+            return color;
+        }
+
+
         [FeatureCalculator("color", Method = CalculationMethod.FromLiteral)]
         public static double Color(int color)
         {
