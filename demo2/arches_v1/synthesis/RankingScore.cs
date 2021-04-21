@@ -18,7 +18,7 @@ namespace Arches
 
         [FeatureCalculator(nameof(Semantics.Filter))]
         public static double Filter(double image, double color) {
-            return color;
+            return color + 1;
         }
 
 

@@ -20,7 +20,6 @@ namespace Arches
                     }
                 }
             }
-            PartialImageSpec.print(recoloredImage);
             return recoloredImage;
         }
 
