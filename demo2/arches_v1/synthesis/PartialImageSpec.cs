@@ -10,9 +10,9 @@ namespace Arches {
     public class PartialImageSpec : Spec
     {
 
-		private IDictionary<State, IEnumerable<object>> examples;
+		public IDictionary<State, object> examples;
 
-		public PartialImageSpec(IDictionary<State, IEnumerable<object>> examples): base(examples.Keys) {
+		public PartialImageSpec(IDictionary<State, object> examples): base(examples.Keys) {
 			this.examples = examples;
 		}
 
@@ -20,9 +20,13 @@ namespace Arches {
         protected override bool CorrectOnProvided(State state, object output)
         {
 			// extract the partial image
-			var space = (examples[state] as List<int[][]>)[0];
+			var space = examples[state] as int[][];
 			// the candidate image to see if it matches the partial image
 			var candidate = output as int[][];
+			Console.WriteLine("space");
+			print(space);
+			Console.WriteLine("candidate");
+			print(candidate);
 			for (int i = 0; i < space.Length; i++) {
 				for (int j = 0; j < space[0].Length; j++) {
 					// if the partial image is 10, then the candidate can be anything except 0
@@ -37,6 +41,7 @@ namespace Arches {
 					}
 				}
 			}
+			Console.WriteLine("matched");
 			return true;
         }
 
@@ -63,7 +68,7 @@ namespace Arches {
 
         protected override Spec TransformInputs(Func<State, State> transformer)
         {
-			var result = new Dictionary<State, IEnumerable<object>>();
+			var result = new Dictionary<State, object>();
 			foreach (var input in examples.Keys) {
 				result[transformer(input)] = examples[input];
 			}
@@ -75,7 +80,7 @@ namespace Arches {
                 for (int j = 0; j < m[0].Length; j++) {
                     Console.Out.Write(m[i][j] + " ");
                 }
-                Console.Out.WriteLine();
+                Console.WriteLine();
             }
         }
     }
