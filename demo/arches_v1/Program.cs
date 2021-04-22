@@ -107,7 +107,8 @@ namespace Arches
                 Examples.Add(inputState, new Image(example.output));
             }
 
-            var spec = new ExampleSpec(Examples);
+            //var spec = new ExampleSpec(Examples);
+            var spec = new PartialImageSpec(Examples);
 
             var scoreFeature = new RankingScore(Grammar);
             int K = 4;

@@ -10,9 +10,9 @@ namespace Arches {
     public class PartialImageSpec : Spec
     {
 
-		public IDictionary<State, IEnumerable<object>> PartialImageExamples;
+		public IDictionary<State, object> PartialImageExamples;
 
-		public PartialImageSpec(IDictionary<State, IEnumerable<object>> PartialImageExamples): base(PartialImageExamples.Keys) {
+		public PartialImageSpec(IDictionary<State, object> PartialImageExamples): base(PartialImageExamples.Keys) {
 			this.PartialImageExamples = PartialImageExamples;
 		}
 
@@ -20,7 +20,7 @@ namespace Arches {
         protected override bool CorrectOnProvided(State state, object output)
         {
 			// extract the partial image
-			Image space = (this.PartialImageExamples[state] as List<Image>)[0];
+			Image space = this.PartialImageExamples[state] as Image;
 			// the candidate image to see if it matches the partial image
 			Image candidate = output as Image;
             Console.WriteLine("candidate:");
@@ -88,7 +88,7 @@ namespace Arches {
 
         protected override Spec TransformInputs(Func<State, State> transformer)
         {
-			var result = new Dictionary<State, IEnumerable<object>>();
+			var result = new Dictionary<State, object>();
 			foreach (var input in this.PartialImageExamples.Keys) {
 				result[transformer(input)] = this.PartialImageExamples[input];
 			}
