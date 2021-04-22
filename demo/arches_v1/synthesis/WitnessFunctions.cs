@@ -270,7 +270,6 @@ namespace Arches
             return new DisjunctiveExamplesSpec(result);
         }
 
-
         /*
         Origin Function
         - you don't mess w/ x and y when you rotate
@@ -316,7 +315,7 @@ namespace Arches
                         }
                     }
                 }
-                else if (orthOption == X_AXIS)
+                else if (orthOption == ROT_90)
                 {
                     // TODO: Verify this
                         for (int i = 0; i < preimage.h; i++) // n = preimage.h
