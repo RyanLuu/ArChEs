@@ -36,6 +36,12 @@ namespace Arches
             return image;  // no penalty
         }
 
+        [FeatureCalculator(nameof(Semantics.Identity))]
+        public static double Identity(double image)
+        {
+            return -1 + image;  // don't want layers of identity function
+        }
+
         [FeatureCalculator("color", Method = CalculationMethod.FromLiteral)]
         public static double Color(int color)
         {

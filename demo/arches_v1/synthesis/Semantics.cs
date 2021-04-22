@@ -100,5 +100,10 @@
             output.y = 0;
             return output;
         }
+
+        public static Image Identity(Image image)
+        {
+            return image.Clone() as Image;
+        }
     }
 }

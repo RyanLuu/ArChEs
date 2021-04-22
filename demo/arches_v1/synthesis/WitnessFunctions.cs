@@ -14,14 +14,17 @@ namespace Arches
         {
         }
 
-        [WitnessFunction(nameof(Semantics.FilterColor), 1)]
-        public DisjunctiveExamplesSpec WitnessFilterColor(GrammarRule rule, ExampleSpec spec)
+        [WitnessFunction(nameof(Semantics.FilterColor), 1, DependsOnParameters = new[] { 0 })]
+        public DisjunctiveExamplesSpec WitnessFilterColor(GrammarRule rule, ExampleSpec colorSpec, DisjunctiveExamplesSpec singleSpec)
         {
             var result = new Dictionary<State, IEnumerable<object>>();
 
-            foreach (KeyValuePair<State, object> example in spec.Examples)
+            foreach (KeyValuePair<State, IEnumerable<object>> example in singleSpec.DisjunctiveExamples)
             {
                 State inputState = example.Key;
+                Console.WriteLine(example.Key);
+                Console.WriteLine(rule.Body[0]);
+                Console.WriteLine(rule.Body[0].GetType());
                 var input = inputState[rule.Body[0]] as Image;
                 var output = example.Value as Image;
                 var occurrences = new List<int>();
@@ -188,6 +191,28 @@ namespace Arches
                 // else... This means that there's some complete mismatch in input/output dimensions
                 // that can't have been the result of an orthogonal operation!
                 if (occurrences.Count == 0) { return null; }
+                result[inputState] = occurrences.Cast<object>();
+            }
+            return new DisjunctiveExamplesSpec(result);
+        }
+
+        [WitnessFunction(nameof(Semantics.Identity), 0)]
+        public DisjunctiveExamplesSpec WitnessIdentity(GrammarRule rule, ExampleSpec singleSpec)
+        {
+            var result = new Dictionary<State, IEnumerable<object>>();
+
+            foreach (var example in singleSpec.Examples)
+            {
+                Console.WriteLine("1");
+                State inputState = example.Key;
+                Console.WriteLine(example.Key);
+                Console.WriteLine(example.Value as Image);
+                Console.WriteLine(example.Value as Image == null);
+                // extract output image
+                var output = example.Value as Image;
+                if (output == null) { return null; }
+                var occurrences = new List<Image>();
+                occurrences.Add(output);
                 result[inputState] = occurrences.Cast<object>();
             }
             return new DisjunctiveExamplesSpec(result);
