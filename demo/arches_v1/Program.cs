@@ -13,8 +13,11 @@ using Microsoft.ProgramSynthesis.VersionSpace;
 
 namespace Arches 
 {
+
     internal class Program
     {
+        public static Random rnd = new Random();
+
         private static readonly Grammar Grammar = DSLCompiler.Compile(new CompilerOptions
         {
             InputGrammarText = File.ReadAllText("synthesis/grammar/arches.grammar"),
@@ -95,9 +98,70 @@ namespace Arches
                 }
 
             }
+
+            Console.Out.WriteLine("List the functions that this task is invariant under (i.e. g such that F(x)=y => F(g(x))=g(y)");
+            Console.Out.WriteLine("c    Color mapping");
+            Console.Out.WriteLine("r    Rotation");
+            Console.Out.WriteLine("t    Translation");
+
+            List<Invariant> invariants = new List<Invariant>();
+            while (true)
+            {
+                string invInput= Console.ReadLine().Trim();
+                foreach (char c in invInput)
+                {
+                    switch (c)
+                    {
+                        case 'c':
+                            invariants.Add(new ColormapInvariant());
+                            break;
+                        case 'r':
+                            invariants.Add(new RotationInvariant());
+                            break;
+                        case 't':
+                            invariants.Add(new TranslationInvariant());
+                            break;
+                        default:
+                            Console.Out.WriteLine("Unknown invariant " + c);
+                            continue;
+
+                    }
+                }
+                break;
+            }
             
+            Console.Out.WriteLine("List the functions that this task is equivalent under (i.e. g such that F(x)=y => F(g(x))=y");
+            Console.Out.WriteLine("c    Color mapping");
+            Console.Out.WriteLine("r    Rotation");
+            Console.Out.WriteLine("t    Translation");
+            List<Invariant> equivalences = new List<Invariant>();
+            while (true)
+            {
+                string invInput = Console.ReadLine().Trim();
+                foreach (char c in invInput)
+                {
+                    switch (c)
+                    {
+                        case 'c':
+                            equivalences.Add(new ColormapInvariant());
+                            break;
+                        case 'r':
+                            equivalences.Add(new RotationInvariant());
+                            break;
+                        case 't':
+                            equivalences.Add(new TranslationInvariant());
+                            break;
+                        default:
+                            Console.Out.WriteLine("Unknown equivalence " + c);
+                            continue;
+
+                    }
+                }
+                break;
+            }
+
             Example[] train = task.train;
-            Console.Out.WriteLine("Learning a program for examples:\n");
+            Console.Out.WriteLine("Learning a program for input examples:\n");
             Examples.Clear();
             foreach (Example example in train)
             {
@@ -105,6 +169,39 @@ namespace Arches
                 Console.Out.WriteLine();
                 State inputState = State.CreateForExecution(Grammar.InputSymbol, new Image(example.input));
                 Examples.Add(inputState, new Image(example.output));
+            }
+
+            if (equivalences.Count() > 0 || invariants.Count() > 0)
+            {
+                Console.Out.WriteLine("and generated examples:\n");
+                foreach (Invariant inv in invariants)
+                {
+                    inv.reseed();
+                    foreach (Example example in train)
+                    {
+                        Image newIn = inv.generate(new Image(example.input));
+                        Image newOut = inv.generate(new Image(example.output));
+                        Example newExample = Example.FromImages(newIn, newOut);
+                        newExample.Print();
+                        Console.Out.WriteLine();
+                        State newInState = State.CreateForExecution(Grammar.InputSymbol, newIn);
+                        Examples.Add(newInState, newOut);
+                    }
+                }
+                foreach (Invariant eq in equivalences)
+                {
+                    eq.reseed();
+                    foreach (Example example in train)
+                    {
+                        Image newIn = eq.generate(new Image(example.input));
+                        Image newOut = new Image(example.output);
+                        Example newExample = Example.FromImages(newIn, newOut);
+                        newExample.Print();
+                        Console.Out.WriteLine();
+                        State newInState = State.CreateForExecution(Grammar.InputSymbol, newIn);
+                        Examples.Add(newInState, newOut);
+                    }
+                }
             }
 
             var spec = new ExampleSpec(Examples);
@@ -152,10 +249,7 @@ namespace Arches
                 example.Print();
                 Image newInput = new Image(example.input);
                 State newInputState = State.CreateForExecution(Grammar.InputSymbol, newInput);
-                Example result = new Example();
-                result.input = newInput.toArray();
-                result.output = (_topProgram.Invoke(newInputState) as Image).toArray();
-
+                Example result = Example.FromImages(newInput, _topProgram.Invoke(newInputState) as Image);
                 Console.Out.WriteLine("RESULT:");
                 result.Print();
             }

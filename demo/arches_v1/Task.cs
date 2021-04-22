@@ -26,6 +26,15 @@ namespace Arches
 		public int[,] input;
 		public int[,] output;
 
+
+		public static Example FromImages(Image input, Image output)
+		{
+			Example ret = new Example();
+			ret.input = input.toArray();
+			ret.output = output.toArray();
+			return ret;
+		}
+
 		public void Print()
 		{
 			for (int i = 0; i <= Math.Max(input.GetUpperBound(0), output.GetUpperBound(0)); i++) {
