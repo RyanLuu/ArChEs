@@ -40,9 +40,12 @@ namespace Arches
                     if (output.data[i] == 0) { preimage.data[i] = 0; }
                     // If it's the number on output, it could be anything on input
                     else if (output.data[i] == color) { preimage.data[i] = 10; }
-                    // If it's 10, then great (that means "any nonzero positive number in [1-9]!"
-                    //  We'll just assume it satisfied our color, and set the preimage appropriately
-                    else if (output.data[i] == 10) { preimage.data[i] = 10; }
+                    // If it's 10, then that's bad (that means "any nonzero positive number in [1-9]!"
+                    // We want the color clamp down the value from something partial like 10 --> color
+                    else if (output.data[i] == 10) { 
+                        Console.WriteLine("Ending early on WitnessRecolor_SingleParam, value 10 on output");
+                        return null; 
+                    }
                     // If it's a positive number that isn't 10, that's a bad sign 
                     // It means we couldn't have done recolor with the color we were provided!
                     else if (output.data[i] > 0 && output.data[i] < 10)
@@ -151,8 +154,11 @@ namespace Arches
                     // if output is 0 then the preimage must be any color other than color, so -color 
                     if (output.data[i] == 0) { preimage.data[i] = -color; }
                     else if (output.data[i] == color) { preimage.data[i] = color; }
-                    // We don't care what the output is, we just know it's nonzero and positive, like our color!
-                    else if (output.data[i] == 10) { preimage.data[i] = color; }
+                    // If the value is 10, we didn't clamp down with filter, so return null
+                    else if (output.data[i] == 10) { 
+                        Console.WriteLine("Ending early on WitnessFilter_SingleParam, value 10 on output");
+                        return null; 
+                    }
                     // We found a positive value, but it wasn't our expected value after applying filter, 
                     // so return null! (unless it's 10!)
                     else if (output.data[i] > 0 && output.data[i] < 10)
@@ -260,7 +266,14 @@ namespace Arches
             return new DisjunctiveExamplesSpec(result);
         }
 
-        [WitnessFunction(nameof(Semantics.FilterColor), 0, DependsOnParameters = new[] { 1 })]
+
+        /*
+        Origin Function
+        - you don't mess w/ x and y when you rotate
+        - snapping back to 0 post-rotation
+        */
+
+        [WitnessFunction(nameof(Semantics.Orthogonal), 0, DependsOnParameters = new[] { 1 })]
         public PartialImageSpec WitnessOrthogonal_SingleParam(GrammarRule rule, PartialImageSpec spec, ExampleSpec orthOptionSpec)
         {
             var result = new Dictionary<State, object>();
