@@ -8,8 +8,8 @@ language Transform;
 
 @input int[][] image;
 
-@start int[][] single := Recolor(@recurse[3] single, color)
-				  | Filter(@recurse[3] single, color)
+@start int[][] single := Recolor(@recurse[2] single, color)
+				  | Filter(@recurse[2] single, color)
 				  | image;
 
 int color;

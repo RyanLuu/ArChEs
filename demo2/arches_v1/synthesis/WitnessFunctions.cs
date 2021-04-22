@@ -108,6 +108,9 @@ namespace Arches
                         occurrences.Add(i);
                     }
                 }
+                if (candidate < 0) {
+
+                }
                 // Normal number so add it
                 else {  occurrences.Add(candidate);}
                 result[inputState] = occurrences.Cast<object>();
@@ -144,6 +147,11 @@ namespace Arches
                         // if output is 0 then the preimage must be any color other than color, so -color 
                         if (output[i][j] == 0) { preimage[i][j] = -color; }
                         else if (output[i][j] == color) {preimage[i][j] = color;}
+                        // We don't care what the output is, we just know it's nonzero and positive, like our color!
+                        else if (output[i][j] == 10) {preimage[i][j] = color;}
+                        // We found a positive value, but it wasn't our expected value after applying filter, 
+                        // so return null! (unless it's 10!)
+                        else if (output[i][j] > 0 && output[i][j] < 10) {return null;}
                         // Negative case, the output is an over-specified negative number
                         else if (output[i][j] < 0) {
                             Console.WriteLine("You better believe I got here!");
@@ -192,6 +200,7 @@ namespace Arches
                         }
                     }
                 }
+                // Didn't get a single nonzero entry, so return null
                 if (candidate == -11) {
                     return null;
                 }
@@ -201,6 +210,12 @@ namespace Arches
                     Console.WriteLine("I got here in filter");
                     for (int i = 1; i < 10; i++) {
                         if (i == -candidate) {continue;}
+                        occurrences.Add(i);
+                    }
+                }
+                // This could be literally *any* value!
+                else if (candidate == 10) {
+                    for (int i = 1; i < 10; i++) {
                         occurrences.Add(i);
                     }
                 }
