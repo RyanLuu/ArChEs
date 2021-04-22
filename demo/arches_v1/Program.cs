@@ -15,6 +15,10 @@ namespace Arches
 {
     internal class Program
     {
+        public static bool DEBUG_STATUS = false;
+        public static void DEBUG(string debug_message) {
+            if (DEBUG_STATUS) {Console.WriteLine(debug_message);}
+        }
         private static readonly Grammar Grammar = DSLCompiler.Compile(new CompilerOptions
         {
             InputGrammarText = File.ReadAllText("synthesis/grammar/arches.grammar"),

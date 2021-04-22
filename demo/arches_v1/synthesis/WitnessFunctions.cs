@@ -52,7 +52,7 @@ namespace Arches
                     // It means we couldn't have done recolor with the color we were provided!
                     else if (output.data[i] > 0 && output.data[i] < 10)
                     {
-                        Console.WriteLine("Ending Early in WitnessRecolor_SingleParam, found multiple nonzero values on output");
+                        Program.DEBUG("Ending Early in WitnessRecolor_SingleParam, found multiple nonzero values on output");
                         return null;
                     }
                     // Negative case, the output is an over-specified negative number
@@ -62,7 +62,7 @@ namespace Arches
                         // we applied a recolor(image, color) and got an output that wasn't color
                         if (output.data[i] == -color)
                         {
-                            Console.WriteLine("Ending Early in WitnessRecolor_SingleParam, found -color on output for Recolor(image, color)");
+                            Program.DEBUG("Ending Early in WitnessRecolor_SingleParam, found -color on output for Recolor(image, color)");
                             return null;
                         }
                         // Otherwise, that's alright! We can just set the preimage to be whatever we want (10)
@@ -98,7 +98,7 @@ namespace Arches
                         // Second unique nonzero --> invalid entry 
                         else if (candidate != output.data[i])
                         {
-                            Console.WriteLine("Ending Early on WitnessRecolor_ColorParam, found multiple nonzero values on output");
+                            Program.DEBUG("Ending Early on WitnessRecolor_ColorParam, found multiple nonzero values on output");
                             return null;
                         }
                     }
@@ -106,7 +106,7 @@ namespace Arches
                 // No candidates found, so return null
                 if (candidate == -11)
                 {
-                    Console.WriteLine("Ending Early on WitnessRecolor_ColorParam, all zeroes on output");
+                    Program.DEBUG("Ending Early on WitnessRecolor_ColorParam, all zeroes on output");
                     return null;
                 }
                 var occurrences = new List<int>();
@@ -122,7 +122,7 @@ namespace Arches
                 // Could be any number at all
                 else if (candidate == 10)
                 {
-                    Console.WriteLine("Got here");
+                    Program.DEBUG("Got here");
                     for (int i = 1; i < 10; i++) { occurrences.Add(i); }
                 }
                 // Normal number so add it
@@ -167,7 +167,7 @@ namespace Arches
                     // so return null! (unless it's 10!)
                     else if (output.data[i] > 0 && output.data[i] < 10)
                     {
-                        Console.WriteLine("Ending early on WitnessFilter_SingleParam, multiple nonzero values on output");
+                        Program.DEBUG("Ending early on WitnessFilter_SingleParam, multiple nonzero values on output");
                         return null;
                     }
                     // Negative case, the output is an over-specified negative number
@@ -209,7 +209,7 @@ namespace Arches
                         // Second unique nonzero value found; means we didn't run Filter
                         else if (candidate != output.data[i])
                         {
-                            Console.WriteLine("Ending Early on WitnessFilter_ColorParam, found multiple nonzero values on output");
+                            Program.DEBUG("Ending Early on WitnessFilter_ColorParam, found multiple nonzero values on output");
                             return null;
                         }
                     }
@@ -217,7 +217,7 @@ namespace Arches
                 // Didn't get a single nonzero entry, so return null
                 if (candidate == -11)
                 {
-                    Console.WriteLine("Ending Early on WitnessFilter_ColorParam, all zeroes on output");
+                    Program.DEBUG("Ending Early on WitnessFilter_ColorParam, all zeroes on output");
                     return null;
                 }
                 var occurrences = new List<int>();
@@ -341,11 +341,7 @@ namespace Arches
 
             foreach (var example in spec.PartialImageExamples)
             {
-                Console.WriteLine("1");
                 State inputState = example.Key;
-                Console.WriteLine(example.Key);
-                Console.WriteLine(example.Value as Image);
-                Console.WriteLine(example.Value as Image == null);
                 // extract output image
                 var output = example.Value as Image;
                 if (output == null) { return null; }
