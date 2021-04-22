@@ -25,22 +25,15 @@ namespace Arches
         [WitnessFunction(nameof(Semantics.Recolor), 0, DependsOnParameters = new[] { 1 })]
         public PartialImageSpec WitnessRecolor_SingleParam(GrammarRule rule, PartialImageSpec spec, ExampleSpec colorSpec)
         {
-            //Console.WriteLine("super duper");
             var result = new Dictionary<State, object>();
-            foreach (var example in spec.examples)
+            foreach (var example in spec.PartialImageExamples)
             {
                 State inputState = example.Key;
                 var output = example.Value as int[][];
-                //Console.WriteLine("SEAN I'm here toowoerjo");
-                //Console.WriteLine(colorSpec.Examples[inputState].GetType());
                 int color = (int)colorSpec.Examples[inputState];
-                //Console.WriteLine(color);
-                //print(output);
-
                 // create blank preimage
                 int[][] preimage = new int[output.Length][];
                 for (int i = 0; i < preimage.Length; i++) { preimage[i] = new int[output[i].Length]; }
-
                 // loop through all pixels of output image
                 for (int i = 0; i < output.Length; i++)
                 {
@@ -49,19 +42,20 @@ namespace Arches
                         // if output is 0 then the preimage must also be 0 because recolor does not affect pixels with color 0
                         if (output[i][j] == 0) { preimage[i][j] = 0; }
                         // If it's the number on output, it could be anything on input
-                        else if (output[i][j] == color) {preimage[i][j] = 10;}
+                        else if (output[i][j] == color) { preimage[i][j] = 10; }
                         // Negative case, the output is an over-specified negative number
-                        else if (output[i][j] < 0) {
+                        else if (output[i][j] < 0)
+                        {
                             // If our output value is -color, that won't work since that would mean
                             // we applied a recolor(image, color) and got an output that wasn't color
-                            if (output[i][j] == -color) {return null;}
+                            if (output[i][j] == -color) { return null; }
                             // Otherwise, that's alright! We can just set the preimage to be whatever we want (10)
-                            else {preimage[i][j] = 10;}
+                            else { preimage[i][j] = 10; }
                         }
-                        else {throw new NotSupportedException();}
+                        else { throw new NotSupportedException(); }
                     }
                 }
-            result[inputState] = preimage;
+                result[inputState] = preimage;
             }
             return new PartialImageSpec(result);
         }
@@ -75,8 +69,7 @@ namespace Arches
         public DisjunctiveExamplesSpec WitnessRecolor_ColorParam(GrammarRule rule, PartialImageSpec spec)
         {
             var result = new Dictionary<State, IEnumerable<object>>();
-            //Console.WriteLine("SEAN 4");
-            foreach (KeyValuePair<State, object> example in spec.examples)
+            foreach (KeyValuePair<State, object> example in spec.PartialImageExamples)
             {
                 State inputState = example.Key;
                 var output = example.Value as int[][];
@@ -85,34 +78,34 @@ namespace Arches
                 {
                     for (int j = 0; j < output[i].Length; j++)
                     {
-                        if (output[i][j] != 0) {
-                            if (candidate == -11) {
-                                candidate = output[i][j];
-                            }
-                            else if (candidate != output[i][j]) {
+                        if (output[i][j] != 0)
+                        {
+                            // First nonzero found!
+                            if (candidate == -11) { candidate = output[i][j]; }
+                            // Second unique nonzero --> invalid entry 
+                            else if (candidate != output[i][j])
+                            {
                                 Console.WriteLine("Ending Early, found multiple nonzero values on output");
                                 return null;
                             }
                         }
                     }
                 }
-                if (candidate == -11) {
-                    return null;
-                }
+                // No candidates found, so return null
+                if (candidate == -11){return null;}
                 var occurrences = new List<int>();
                 // Negative number, meaning it can be anything but -candidate
-                if (candidate < 0) {
+                if (candidate < 0)
+                {
                     Console.WriteLine("I got here");
-                    for (int i = 1; i < 10; i++) {
-                        if (i == -candidate) {continue;}
+                    for (int i = 1; i < 10; i++)
+                    {
+                        if (i == -candidate) { continue; }
                         occurrences.Add(i);
                     }
                 }
-                if (candidate < 0) {
-
-                }
                 // Normal number so add it
-                else {  occurrences.Add(candidate);}
+                else { occurrences.Add(candidate); }
                 result[inputState] = occurrences.Cast<object>();
             }
             return new DisjunctiveExamplesSpec(result);
@@ -129,11 +122,10 @@ namespace Arches
         public PartialImageSpec WitnessFilter_SingleParam(GrammarRule rule, PartialImageSpec spec, ExampleSpec colorSpec)
         {
             var result = new Dictionary<State, object>();
-            foreach (var example in spec.examples)
+            foreach (var example in spec.PartialImageExamples)
             {
                 State inputState = example.Key;
                 var output = example.Value as int[][];
-                //Console.WriteLine("SEAN I'm in sem filter 0");
                 int color = (int)colorSpec.Examples[inputState];
                 // create blank preimage
                 int[][] preimage = new int[output.Length][];
@@ -146,22 +138,23 @@ namespace Arches
                     {
                         // if output is 0 then the preimage must be any color other than color, so -color 
                         if (output[i][j] == 0) { preimage[i][j] = -color; }
-                        else if (output[i][j] == color) {preimage[i][j] = color;}
+                        else if (output[i][j] == color) { preimage[i][j] = color; }
                         // We don't care what the output is, we just know it's nonzero and positive, like our color!
-                        else if (output[i][j] == 10) {preimage[i][j] = color;}
+                        else if (output[i][j] == 10) { preimage[i][j] = color; }
                         // We found a positive value, but it wasn't our expected value after applying filter, 
                         // so return null! (unless it's 10!)
-                        else if (output[i][j] > 0 && output[i][j] < 10) {return null;}
+                        else if (output[i][j] > 0 && output[i][j] < 10) { return null; }
                         // Negative case, the output is an over-specified negative number
-                        else if (output[i][j] < 0) {
+                        else if (output[i][j] < 0)
+                        {
                             Console.WriteLine("You better believe I got here!");
                             // If our output value is -color, that's only a problem
                             // when our input is color. So set preimage to -color 
-                            if (output[i][j] == -color) {preimage[i][j] = -color;}
+                            if (output[i][j] == -color) { preimage[i][j] = -color; }
                             // Pretty sure this scenario is impossible?
-                            else {throw new Exception("Inconceivable!");}
+                            else { throw new Exception("Inconceivable!"); }
                         }
-                        else {throw new NotSupportedException();}
+                        else { throw new NotSupportedException(); }
                     }
                 }
                 result[inputState] = preimage;
@@ -177,23 +170,23 @@ namespace Arches
         public DisjunctiveExamplesSpec WitnessFilter_ColorParam(GrammarRule rule, PartialImageSpec spec)
         {
             var result = new Dictionary<State, IEnumerable<object>>();
-            //Console.WriteLine("SEAN 6");
-            foreach (KeyValuePair<State, object> example in spec.examples)
+            foreach (KeyValuePair<State, object> example in spec.PartialImageExamples)
             {
-            //Console.WriteLine("SEAN 7");    
                 State inputState = example.Key;
                 var output = example.Value as int[][];
-                // loop through all pixels of output image and confirm there's only 1 nonzero color value
+                // Loop through all pixels of output image and confirm there's only 1 nonzero color value
                 int candidate = -11;
                 for (int i = 0; i < output.Length; i++)
                 {
                     for (int j = 0; j < output[i].Length; j++)
                     {
-                        if (output[i][j] != 0) {
-                            if (candidate == -11) {
-                                candidate = output[i][j];
-                            }
-                            else if (candidate != output[i][j]) {
+                        if (output[i][j] != 0)
+                        {
+                            // First time we encounter a nonzero value, so set candidate to be that
+                            if (candidate == -11) { candidate = output[i][j]; }
+                            // Second unique nonzero value found; means we didn't run Filter
+                            else if (candidate != output[i][j])
+                            {
                                 Console.WriteLine("Ending Early, found multiple nonzero values on output");
                                 return null;
                             }
@@ -201,26 +194,31 @@ namespace Arches
                     }
                 }
                 // Didn't get a single nonzero entry, so return null
-                if (candidate == -11) {
+                if (candidate == -11)
+                {
                     return null;
                 }
                 var occurrences = new List<int>();
-                // Negative number, meaning it can be anything but -candidate
-                if (candidate < 0) {
-                    Console.WriteLine("I got here in filter");
-                    for (int i = 1; i < 10; i++) {
-                        if (i == -candidate) {continue;}
+                // Negative number, meaning it can be anything but -candidate in [1-9]
+                if (candidate < 0)
+                {
+                    for (int i = 1; i < 10; i++)
+                    {
+                        if (i == -candidate) { continue; }
                         occurrences.Add(i);
                     }
                 }
-                // This could be literally *any* value!
-                else if (candidate == 10) {
-                    for (int i = 1; i < 10; i++) {
+                // This could be literally *any* nonzero, positive value in [1-9]!
+                else if (candidate == 10)
+                {
+                    for (int i = 1; i < 10; i++)
+                    {
                         occurrences.Add(i);
                     }
                 }
-                // Otherwise, it's a normal number and we can add it
-                else {
+                // Otherwise, it's a normal number in [1-9] and we can add it 
+                else
+                {
                     occurrences.Add(candidate);
                 }
                 result[inputState] = occurrences.Cast<object>();

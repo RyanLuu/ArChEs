@@ -59,10 +59,14 @@ namespace Arches
             
     
             State inputState = State.CreateForExecution(Grammar.InputSymbol, inputTest);
+            //Examples.Add(inputState, outputTest1); 
+            //Examples.Add(inputState, outputTest2); 
             Examples.Add(inputState, outputTest3); 
+            //Examples.Add(inputState, inputTest); 
             
 
-            var spec = new ExampleSpec(Examples);
+            //var spec = new ExampleSpec(Examples);
+            var spec = new PartialImageSpec(Examples);
             Console.WriteLine("Learning a program for examples:");
             foreach (KeyValuePair<State, object> example in Examples)
                 Console.WriteLine("\"{0}\" -> \"{1}\"", example.Key.Bindings.First().Value, example.Value);
