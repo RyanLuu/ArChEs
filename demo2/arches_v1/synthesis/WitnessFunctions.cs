@@ -43,12 +43,26 @@ namespace Arches
                         if (output[i][j] == 0) { preimage[i][j] = 0; }
                         // If it's the number on output, it could be anything on input
                         else if (output[i][j] == color) { preimage[i][j] = 10; }
+                        // If it's 10, then great (that means "any nonzero positive number in [1-9]!"
+                        //  We'll just assume it satisfied our color, and set the preimage appropriately
+                        else if (output[i][j] == 10) { preimage[i][j] = 10; }
+                        // If it's a positive number that isn't 10, that's a bad sign 
+                        // It means we couldn't have done recolor with the color we were provided!
+                        else if (output[i][j] > 0 && output[i][j] < 10)
+                        {
+                            Console.WriteLine("Ending Early in WitnessRecolor_SingleParam, found multiple nonzero values on output");
+                            return null;
+                        }
                         // Negative case, the output is an over-specified negative number
                         else if (output[i][j] < 0)
                         {
                             // If our output value is -color, that won't work since that would mean
                             // we applied a recolor(image, color) and got an output that wasn't color
-                            if (output[i][j] == -color) { return null; }
+                            if (output[i][j] == -color)
+                            {
+                                Console.WriteLine("Ending Early in WitnessRecolor_SingleParam, found -color on output for Recolor(image, color)");
+                                return null;
+                            }
                             // Otherwise, that's alright! We can just set the preimage to be whatever we want (10)
                             else { preimage[i][j] = 10; }
                         }
@@ -85,24 +99,33 @@ namespace Arches
                             // Second unique nonzero --> invalid entry 
                             else if (candidate != output[i][j])
                             {
-                                Console.WriteLine("Ending Early, found multiple nonzero values on output");
+                                Console.WriteLine("Ending Early on WitnessRecolor_ColorParam, found multiple nonzero values on output");
                                 return null;
                             }
                         }
                     }
                 }
                 // No candidates found, so return null
-                if (candidate == -11){return null;}
+                if (candidate == -11)
+                {
+                    Console.WriteLine("Ending Early on WitnessRecolor_ColorParam, all zeroes on output");
+                    return null;
+                }
                 var occurrences = new List<int>();
                 // Negative number, meaning it can be anything but -candidate
                 if (candidate < 0)
                 {
-                    Console.WriteLine("I got here");
                     for (int i = 1; i < 10; i++)
                     {
                         if (i == -candidate) { continue; }
                         occurrences.Add(i);
                     }
+                }
+                // Could be any number at all
+                else if (candidate == 10)
+                {
+                    Console.WriteLine("Got here");
+                    for (int i = 1; i < 10; i++) { occurrences.Add(i); }
                 }
                 // Normal number so add it
                 else { occurrences.Add(candidate); }
@@ -143,11 +166,14 @@ namespace Arches
                         else if (output[i][j] == 10) { preimage[i][j] = color; }
                         // We found a positive value, but it wasn't our expected value after applying filter, 
                         // so return null! (unless it's 10!)
-                        else if (output[i][j] > 0 && output[i][j] < 10) { return null; }
+                        else if (output[i][j] > 0 && output[i][j] < 10)
+                        {
+                            Console.WriteLine("Ending early on WitnessFilter_SingleParam, multiple nonzero values on output");
+                            return null;
+                        }
                         // Negative case, the output is an over-specified negative number
                         else if (output[i][j] < 0)
                         {
-                            Console.WriteLine("You better believe I got here!");
                             // If our output value is -color, that's only a problem
                             // when our input is color. So set preimage to -color 
                             if (output[i][j] == -color) { preimage[i][j] = -color; }
@@ -187,7 +213,7 @@ namespace Arches
                             // Second unique nonzero value found; means we didn't run Filter
                             else if (candidate != output[i][j])
                             {
-                                Console.WriteLine("Ending Early, found multiple nonzero values on output");
+                                Console.WriteLine("Ending Early on WitnessFilter_ColorParam, found multiple nonzero values on output");
                                 return null;
                             }
                         }
@@ -196,6 +222,7 @@ namespace Arches
                 // Didn't get a single nonzero entry, so return null
                 if (candidate == -11)
                 {
+                    Console.WriteLine("Ending Early on WitnessFilter_ColorParam, all zeroes on output");
                     return null;
                 }
                 var occurrences = new List<int>();
