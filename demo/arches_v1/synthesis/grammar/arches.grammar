@@ -13,8 +13,8 @@ language Arches;
 
 Image single := input_image
               | FilterColor(@recurse[3] single, color)
-              | Recolor(@recurse[3] single, color);
-              //| Orthogonal(@recurse[3] single, orth_option)
+              | Recolor(@recurse[3] single, color)
+              | Orthogonal(@recurse[3] single, orth_option);
               //| Origin(@recurse[3] single);
 
 int color;

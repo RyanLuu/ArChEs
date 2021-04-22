@@ -61,7 +61,6 @@ namespace Arches {
                 else {
                     throw new NotSupportedException(); // We don't support that value in our images yet
                 }
-
             }
 			return true;
         }

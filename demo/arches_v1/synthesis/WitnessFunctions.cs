@@ -238,74 +238,83 @@ namespace Arches
             return new DisjunctiveExamplesSpec(result);
         }
 
+        // Given Partial Image Spec, return all possible transformations
+        // Trivially, this is going to imply ALL of them, since for any 
+        // output matrix, we can claim there existed some rotation or flip
         [WitnessFunction(nameof(Semantics.Orthogonal), 1)]
-        // TODO: Modify this to work with PartialImages
-        public DisjunctiveExamplesSpec WitnessOrthogonal(GrammarRule rule, ExampleSpec spec)
+        public DisjunctiveExamplesSpec WitnessOrthogonal_OrthOptionParam(GrammarRule rule, PartialImageSpec spec)
         {
             var result = new Dictionary<State, IEnumerable<object>>();
             int Y_AXIS = 0;
             int X_AXIS = 1;
             int ROT_90 = 2;
-            foreach (KeyValuePair<State, object> example in spec.Examples)
+            foreach (KeyValuePair<State, object> example in spec.PartialImageExamples)
             {
                 State inputState = example.Key;
-                var input = inputState[rule.Body[0]] as Image;
-                var output = example.Value as Image;
                 var occurrences = new List<int>();
+                occurrences.Add(Y_AXIS);
+                occurrences.Add(X_AXIS);
+                occurrences.Add(ROT_90);
+                result[inputState] = occurrences.Cast<object>();
+            }
+            return new DisjunctiveExamplesSpec(result);
+        }
 
-                // If output dims correspond to the input dims
-                if (input.h == output.h && input.w == output.w)
+        [WitnessFunction(nameof(Semantics.FilterColor), 0, DependsOnParameters = new[] { 1 })]
+        public PartialImageSpec WitnessOrthogonal_SingleParam(GrammarRule rule, PartialImageSpec spec, ExampleSpec orthOptionSpec)
+        {
+            var result = new Dictionary<State, object>();
+            int Y_AXIS = 0;
+            int X_AXIS = 1;
+            int ROT_90 = 2;
+            foreach (KeyValuePair<State, object> example in spec.PartialImageExamples)
+            {
+                State inputState = example.Key;
+                var output = example.Value as Image;
+                int orthOption = (int)orthOptionSpec.Examples[inputState];
+                Image preimage = null;
+                // TODO: We want to handle changes in x and y
+                if (orthOption == Y_AXIS) { preimage = new Image(output.x, output.y, output.w, output.h); }
+                else if (orthOption == X_AXIS) { preimage = new Image(output.x, output.y, output.w, output.h); }
+                else if (orthOption == ROT_90) { preimage = new Image(output.x, output.y, output.h, output.w); }
+                else {throw new NotSupportedException("We don't support that option for Orthogonal yet");}
+
+                if (orthOption == Y_AXIS)
                 {
-                    // Check if it could have been a y_axis flip
-                    bool y_axis_check = true;
-                    bool x_axis_check = true;
                     for (int i = 0; i < output.h; i++)
                     {
                         for (int j = 0; j < output.w; j++)
                         {
-                            y_axis_check &=
-                                (output.data[i * output.w + (output.w - j - 1)] == input.data[input.w + j]);
-                            x_axis_check &=
-                                (output.data[(output.h - i - 1) * output.w + j] == input.data[i * input.w + j]);
+                            preimage.data[preimage.w + j] = output.data[i * output.w + (output.w - j - 1)];
                         }
-                        if (!y_axis_check && !x_axis_check) { break; }
-                    }
-                    if (y_axis_check) { occurrences.Add(Y_AXIS); }
-                    if (x_axis_check) { occurrences.Add(X_AXIS); }
-                    // If the dimensions are equivalent (AKA, it's square), could have been a ROT_90...
-                    if (output.h == output.w && input.h == input.w)
-                    {
-                        bool rot_90_check = true;
-                        for (int i = 0; i < output.h; i++)
-                        {
-                            for (int j = 0; j < output.w; j++)
-                            {
-                                // Quick condition to check for square matrix
-                                // output[output.w - j - 1,i] == input[i,j]
-                                rot_90_check &=
-                                    (output.data[(output.w - j - 1) * output.w + i] == input.data[i * input.w + j]);
-                            }
-                            if (!rot_90_check) { break; }
-                        }
-                        if (rot_90_check) { occurrences.Add(ROT_90); }
                     }
                 }
-                // else if, output dims don't correspond to the input dims, so probably ROT_90
-                else if (output.w == input.h && output.h == input.w)
+                else if (orthOption == X_AXIS)
                 {
-                    // TODO: Determine if there's a more efficient way to do this than literally 
-                    // running the function!
-                    if (Semantics.Orthogonal(input, ROT_90).Equals(output))
+                    for (int i = 0; i < output.h; i++)
                     {
-                        occurrences.Add(ROT_90);
+                        for (int j = 0; j < output.w; j++)
+                        {
+                            preimage.data[i * preimage.w + j] = output.data[(output.h - i - 1) * output.w + j];
+                        }
                     }
                 }
-                // else... This means that there's some complete mismatch in input/output dimensions
-                // that can't have been the result of an orthogonal operation!
-                if (occurrences.Count == 0) { return null; }
-                result[inputState] = occurrences.Cast<object>();
+                else if (orthOption == X_AXIS)
+                {
+                    // TODO: Verify this
+                        for (int i = 0; i < preimage.h; i++) // n = preimage.h
+                        {
+                            for (int j = 0; j < preimage.w; j++) // m = preimage.w
+                            {
+                                // preimage[i,j] = output[j,n-1-i];
+                                preimage.data[i * preimage.w + j] = output.data[j * output.w + (output.w - 1 - i)];
+                            }
+                        }
+                }
+                else {throw new NotSupportedException("We don't support that option for Orthogonal yet");}
+                result[inputState] = preimage;
             }
-            return new DisjunctiveExamplesSpec(result);
+            return new PartialImageSpec(result);
         }
 
         [WitnessFunction(nameof(Semantics.Identity), 0)]
