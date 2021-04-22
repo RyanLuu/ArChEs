@@ -43,8 +43,10 @@ namespace Arches
                     // If it's 10, then that's bad (that means "any nonzero positive number in [1-9]!"
                     // We want the color clamp down the value from something partial like 10 --> color
                     else if (output.data[i] == 10) { 
-                        Console.WriteLine("Ending early on WitnessRecolor_SingleParam, value 10 on output");
-                        return null; 
+                        preimage.data[i] = 10;
+                        // TODO: Consider reducing the search space of correct programs by returning null
+                        //Console.WriteLine("Ending early on WitnessRecolor_SingleParam, value 10 on output");
+                        //return null; 
                     }
                     // If it's a positive number that isn't 10, that's a bad sign 
                     // It means we couldn't have done recolor with the color we were provided!
@@ -156,8 +158,10 @@ namespace Arches
                     else if (output.data[i] == color) { preimage.data[i] = color; }
                     // If the value is 10, we didn't clamp down with filter, so return null
                     else if (output.data[i] == 10) { 
-                        Console.WriteLine("Ending early on WitnessFilter_SingleParam, value 10 on output");
-                        return null; 
+                        preimage.data[i] = color;
+                        // If we want to explore reducing the number of possible correct programs, return to here
+                        //Console.WriteLine("Ending early on WitnessFilter_SingleParam, value 10 on output");
+                        //return null; 
                     }
                     // We found a positive value, but it wasn't our expected value after applying filter, 
                     // so return null! (unless it's 10!)
