@@ -23,6 +23,8 @@ namespace Arches {
 			var space = examples[state] as int[][];
 			// the candidate image to see if it matches the partial image
 			var candidate = output as int[][];
+			// TODO handle this whenn it's an int 
+			Console.WriteLine(output.GetType());
 			Console.WriteLine("space");
 			print(space);
 			Console.WriteLine("candidate");
