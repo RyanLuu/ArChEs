@@ -36,19 +36,38 @@ namespace Arches
                     inputTest[2] = new int[] {4, 1, 1, 1, 1, 1};
                     inputTest[3] = new int[] {9, 8, 4, 3, 0, 0};
 
-            int[][] outputTest = new int[4][];
-                    outputTest[0] = new int[] {0, 5, 5, 0, 5, 5}; 
-                    outputTest[1] = new int[] {0, 0, 0, 0, 0, 0};
-                    outputTest[2] = new int[] {5, 5, 5, 5, 5, 5};
-                    outputTest[3] = new int[] {5, 5, 5, 5, 0, 0};
+            // expected program Recolor(image, 5)
+            int[][] outputTest1 = new int[4][];
+                    outputTest1[0] = new int[] {0, 5, 5, 0, 5, 5}; 
+                    outputTest1[1] = new int[] {0, 0, 0, 0, 0, 0};
+                    outputTest1[2] = new int[] {5, 5, 5, 5, 5, 5};
+                    outputTest1[3] = new int[] {5, 5, 5, 5, 0, 0};
 
+            // expected program Filter(image, 2)
+            int[][] outputTest2 = new int[4][];
+                    outputTest2[0] = new int[] {0, 2, 2, 0, 0, 0}; 
+                    outputTest2[1] = new int[] {0, 0, 0, 0, 0, 0};
+                    outputTest2[2] = new int[] {0, 0, 0, 0, 0, 0};
+                    outputTest2[3] = new int[] {0, 0, 0, 0, 0, 0};
+
+            // expected program Recolor(Filter(image, 2), 3)
+            int[][] outputTest3 = new int[4][];
+                    outputTest3[0] = new int[] {0, 3, 3, 0, 0, 0}; 
+                    outputTest3[1] = new int[] {0, 0, 0, 0, 0, 0};
+                    outputTest3[2] = new int[] {0, 0, 0, 0, 0, 0};
+                    outputTest3[3] = new int[] {0, 0, 0, 0, 0, 0};
+            
     
             State inputState = State.CreateForExecution(Grammar.InputSymbol, inputTest);
-            Examples.Add(inputState, outputTest); 
+            //Examples.Add(inputState, outputTest1); 
+            //Examples.Add(inputState, outputTest2); 
+            Examples.Add(inputState, outputTest3); 
+            //Examples.Add(inputState, inputTest); 
             
 
-            var spec = new ExampleSpec(Examples);
-            Console.Out.WriteLine("Learning a program for examples:");
+            //var spec = new ExampleSpec(Examples);
+            var spec = new PartialImageSpec(Examples);
+            Console.WriteLine("Learning a program for examples:");
             foreach (KeyValuePair<State, object> example in Examples)
                 Console.WriteLine("\"{0}\" -> \"{1}\"", example.Key.Bindings.First().Value, example.Value);
 
@@ -56,18 +75,18 @@ namespace Arches
             ProgramSet topPrograms = _prose.LearnGrammarTopK(spec, scoreFeature, 4, null);
             if (topPrograms.IsEmpty) {
                 Console.WriteLine(spec);
-                throw new Exception("No program was found for this specification.");
+                // throw new Exception("No program was found for this specification.");
             }
 
             _topProgram = topPrograms.RealizedPrograms.First();
-            Console.Out.WriteLine("Top 4 learned programs:");
+            Console.WriteLine("Top 4 learned programs:");
             var counter = 1;
             foreach (ProgramNode program in topPrograms.RealizedPrograms)
             {
                 if (counter > 4) break;
-                Console.Out.WriteLine("==========================");
-                Console.Out.WriteLine("Program {0}: ", counter);
-                Console.Out.WriteLine(program.PrintAST(ASTSerializationFormat.HumanReadable));
+                Console.WriteLine("==========================");
+                Console.WriteLine("Program {0}: ", counter);
+                Console.WriteLine(program.PrintAST(ASTSerializationFormat.HumanReadable));
                 counter++;
             }
         }

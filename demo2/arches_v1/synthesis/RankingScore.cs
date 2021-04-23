@@ -12,9 +12,15 @@ namespace Arches
         }
 
         [FeatureCalculator(nameof(Semantics.Recolor))]
-        public static double Recolor(double image, double color) {
+        public static double Recolor(double single, double color) {
             return color;
         }
+
+        [FeatureCalculator(nameof(Semantics.Filter))]
+        public static double Filter(double single, double color) {
+            return color;
+        }
+
 
         [FeatureCalculator("color", Method = CalculationMethod.FromLiteral)]
         public static double Color(int color)

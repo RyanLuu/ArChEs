@@ -204,7 +204,8 @@ namespace Arches
                 }
             }
 
-            var spec = new ExampleSpec(Examples);
+            //var spec = new ExampleSpec(Examples);
+            var spec = new PartialImageSpec(Examples);
 
             var scoreFeature = new RankingScore(Grammar);
             int K = 4;
