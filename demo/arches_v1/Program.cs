@@ -18,7 +18,7 @@ namespace Arches
     {
         public static Random rnd = new Random();
 
-        public static bool DEBUG_STATUS = false;
+        public static bool DEBUG_STATUS = true;
         public static void DEBUG(string debug_message) {
             if (DEBUG_STATUS) {Console.WriteLine(debug_message);}
         }
@@ -103,10 +103,11 @@ namespace Arches
 
             }
 
-            Console.Out.WriteLine("List the functions that this task is invariant under (i.e. g such that F(x)=y => F(g(x))=g(y)");
-            Console.Out.WriteLine("c    Color mapping");
-            Console.Out.WriteLine("r    Rotation");
-            Console.Out.WriteLine("t    Translation");
+            Console.Out.WriteLine(@"List the functions that this task is invariant under (i.e. g such that F(x)=y => F(g(x))=g(y)
+c    Color mapping
+r    Rotation
+f    Reflection
+t    Translation");
 
             List<Invariant> invariants = new List<Invariant>();
             while (true)
@@ -122,6 +123,9 @@ namespace Arches
                         case 'r':
                             invariants.Add(new RotationInvariant());
                             break;
+                        case 'f':
+                            invariants.Add(new ReflectionInvariant());
+                            break;
                         case 't':
                             invariants.Add(new TranslationInvariant());
                             break;
@@ -134,10 +138,11 @@ namespace Arches
                 break;
             }
             
-            Console.Out.WriteLine("List the functions that this task is equivalent under (i.e. g such that F(x)=y => F(g(x))=y");
-            Console.Out.WriteLine("c    Color mapping");
-            Console.Out.WriteLine("r    Rotation");
-            Console.Out.WriteLine("t    Translation");
+            Console.Out.WriteLine(@"List the functions that this task is equivalent under (i.e. g such that F(x)=y => F(g(x))=y
+c    Color mapping
+r    Rotation
+f    Reflection
+t    Translation");
             List<Invariant> equivalences = new List<Invariant>();
             while (true)
             {
@@ -151,6 +156,9 @@ namespace Arches
                             break;
                         case 'r':
                             equivalences.Add(new RotationInvariant());
+                            break;
+                        case 'f':
+                            equivalences.Add(new ReflectionInvariant());
                             break;
                         case 't':
                             equivalences.Add(new TranslationInvariant());
@@ -172,7 +180,7 @@ namespace Arches
                 example.Print();
                 Console.Out.WriteLine();
                 State inputState = State.CreateForExecution(Grammar.InputSymbol, new Image(example.input));
-                Examples.Add(inputState, new Image(example.output));
+                Examples.Add(inputState, new DisjunctiveImage(new Image(example.output)));
             }
 
             if (equivalences.Count() > 0 || invariants.Count() > 0)
@@ -189,7 +197,7 @@ namespace Arches
                         newExample.Print();
                         Console.Out.WriteLine();
                         State newInState = State.CreateForExecution(Grammar.InputSymbol, newIn);
-                        Examples.Add(newInState, newOut);
+                        Examples.Add(newInState, new DisjunctiveImage(newOut));
                     }
                 }
                 foreach (Invariant eq in equivalences)
@@ -203,13 +211,13 @@ namespace Arches
                         newExample.Print();
                         Console.Out.WriteLine();
                         State newInState = State.CreateForExecution(Grammar.InputSymbol, newIn);
-                        Examples.Add(newInState, newOut);
+                        Examples.Add(newInState, new DisjunctiveImage(newOut));
                     }
                 }
             }
 
             //var spec = new ExampleSpec(Examples);
-            var spec = new PartialImageSpec(Examples);
+            var spec = new DisjunctiveImageSpec(Examples);
 
             var scoreFeature = new RankingScore(Grammar);
             int K = 4;

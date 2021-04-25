@@ -28,11 +28,11 @@ namespace Arches
     public class ColormapInvariant : Invariant
     {
 
-        private IOrderedEnumerable<int> colormap;
+        private int[] colormap;
 
         public override void reseed()
         {
-            colormap = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9 }.OrderBy(item => Program.rnd.Next());
+            colormap = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9 }.OrderBy(item => Program.rnd.Next()).ToArray<int>();
         }
 
         public override Image generate(Image input)
@@ -42,7 +42,7 @@ namespace Arches
             {
                 if (ret.data[i] != 0)
                 {
-                    ret.data[i] = colormap.ElementAt(i - 1);
+                    ret.data[i] = colormap.ElementAt(ret.data[i] - 1);
                 }
             }
             return ret;
@@ -58,7 +58,7 @@ namespace Arches
 
         public override Image generate(Image input)
         {
-            Image ret = input.Clone() as Image;
+            Image ret = input;
             for (int i = 0; i < rots; i++)
             {
                 ret = Semantics.Orthogonal(ret, 2);
@@ -67,20 +67,37 @@ namespace Arches
         }
     }
 
-    public class TranslationInvariant : Invariant
+    public class ReflectionInvariant : Invariant
     {
-        int off;
+        bool x;
+
         public override void reseed()
         {
-            off = Program.rnd.Next(8);
+            x = Program.rnd.Next() % 2 == 0;
+        }
+
+        public override Image generate(Image input)
+        {
+            return x ? Semantics.Orthogonal(input, 1) : Semantics.Orthogonal(input, 0);
+        }
+    }
+
+    public class TranslationInvariant : Invariant
+    {
+        bool x, y;
+        public override void reseed()
+        {
+            int r = Program.rnd.Next(3);
+            x = r == 0 || r == 2;
+            y = r == 1 || r == 2;
         }
         public override Image generate(Image input)
         {
-            // TODO: consider changing data
-            Image ret = input.Clone() as Image;
-            int[,] nbs = { {-1,-1},{-1,0},{-1,1},{0,-1},{0,1},{1,-1},{1,0},{1,1} };
-            ret.x += nbs[off, 0];
-            ret.y += nbs[off, 1];
+            Image ret = new Image(input.x, input.y, input.w + (x ? 1 : 0), input.h + (y ? 1 : 0));
+            for (int i = 0; i < input.data.Length; i++)
+            {
+                ret.data[i + (x ? (i / input.w + 1) : 0) + (y ? ret.w : 0)] = input.data[i];
+            }
             return ret;
         }
     }

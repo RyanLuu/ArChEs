@@ -103,7 +103,78 @@
 
         public static Image Identity(Image image)
         {
-            return image.Clone() as Image;
+            return image;
+        }
+
+        public static Image Compress(Image image)
+        {
+            int minrow = image.h;
+            for(int i = 0; i < image.h; i++)
+            {
+                for (int j = 0; j < image.w; j++)
+                {
+                    if (image.data[i * image.w + j] != 0)
+                    {
+                        minrow = i;
+                        break;
+                    }
+                }
+                if (minrow != image.h)
+                {
+                    break;
+                }
+            }
+            int mincol = image.w;
+            for (int j = 0; j < image.w; j++)
+            {
+                for (int i = 0; i < image.h; i++)
+                {
+                    if (image.data[i * image.w + j] != 0)
+                    {
+                        mincol = j;
+                        break;
+                    }
+                }
+                if (mincol != image.w)
+                {
+                    break;
+                }
+            }
+            int maxrow = -1;
+            for (int i = image.h - 1; i >= 0; i--)
+            {
+                for (int j = 0; j < image.w; j++)
+                {
+                    if (image.data[i * image.w + j] != 0)
+                    {
+                        maxrow = i;
+                        break;
+                    }
+                }
+                if (maxrow != -1)
+                {
+                    break;
+                }
+            }
+            int maxcol = -1;
+            for (int j = image.w - 1; j >= 0; j--)
+            {
+                for (int i = 0; i < image.h; i++)
+                {
+                    if (image.data[i * image.w + j] != 0)
+                    {
+                        mincol = j;
+                        break;
+                    }
+                }
+                if (maxcol != -1)
+                {
+                    break;
+                }
+            }
+            Image ret = new Image(image.x + mincol, image.y + minrow, maxcol - mincol + 1, maxrow - minrow + 1);
+            // TODO: COPY DATA
+            return ret;
         }
     }
 }

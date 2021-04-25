@@ -12,10 +12,10 @@ language Arches;
 @start Image program := single;
 
 Image single := input_image
-              | FilterColor(@recurse[3] single, color)
-              | Recolor(@recurse[3] single, color);
-              //| Orthogonal(@recurse[3] single, orth_option);
-              //| Origin(@recurse[3] single);
+              | FilterColor(@recurse[4] single, color)
+              | Recolor(@recurse[4] single, color)
+              | Orthogonal(@recurse[4] single, orth_option);
+              //| Origin(@recurse[4] single);
 
 int color;
 int orth_option;
