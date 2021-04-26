@@ -138,19 +138,19 @@ namespace Arches
                 // create blank preimage
                 AbstractImage preimage = new AbstractImage(output.x, output.y, output.w, output.h);
                 // loop through all pixels of output image
-                for (int i = 0; i < output.ddata.Length; i++)
+                for (int i = 0; i < output.abstract_data.Length; i++)
                 {
-                    ISet<int> colorSet = output.ddata[i].ToSet();
+                    ISet<int> colorSet = output.abstract_data[i].ToSet();
 
                     if (colorSet.Contains(0))
                     {
-                        preimage.ddata[i].UnionWith(new AbstractValue(new List<int> { 0 }));
+                        preimage.abstract_data[i].UnionWith(new AbstractValue(new List<int> { 0 }));
                     }
                     if (colorSet.Contains(color))
                     {
-                        preimage.ddata[i].UnionWith(new AbstractValue(AbstractConstants.NONZERO));
+                        preimage.abstract_data[i].UnionWith(new AbstractValue(AbstractConstants.NONZERO));
                     }
-                    if (preimage.ddata[i].IsEmpty()) // empty set (output not 0 or color)
+                    if (preimage.abstract_data[i].IsEmpty()) // empty set (output not 0 or color)
                     {
                         return null;
                     }
@@ -175,9 +175,9 @@ namespace Arches
                 var output = example.Value as AbstractImage;
                 ISet<int> candidateSet = new HashSet<int>(new [] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
 
-                for (int i = 0; i < output.ddata.Length; i++)
+                for (int i = 0; i < output.abstract_data.Length; i++)
                 {
-                    ISet<int> colorSet = output.ddata[i].ToSet();
+                    ISet<int> colorSet = output.abstract_data[i].ToSet();
                     if (!colorSet.Contains(0))
                     {
                         candidateSet.IntersectWith(colorSet);
@@ -207,19 +207,19 @@ namespace Arches
                 // create blank preimage
                 AbstractImage preimage = new AbstractImage(output.x, output.y, output.w, output.h);
                 // loop through all pixels of output image
-                for (int i = 0; i < output.ddata.Length; i++)
+                for (int i = 0; i < output.abstract_data.Length; i++)
                 {
-                    ISet<int> colorSet = output.ddata[i].ToSet();
+                    ISet<int> colorSet = output.abstract_data[i].ToSet();
 
                     if (colorSet.Contains(0))
                     {
-                        preimage.ddata[i].UnionWith(new AbstractValue(new List<int> { color }).Complement());
+                        preimage.abstract_data[i].UnionWith(new AbstractValue(new List<int> { color }).Complement());
                     }
                     if (colorSet.Contains(color))
                     {
-                        preimage.ddata[i].UnionWith(new AbstractValue(new List<int> { color }));
+                        preimage.abstract_data[i].UnionWith(new AbstractValue(new List<int> { color }));
                     }
-                    if (preimage.ddata[i].IsEmpty()) // empty set (output not 0 or color)
+                    if (preimage.abstract_data[i].IsEmpty()) // empty set (output not 0 or color)
                     {
                         return null;
                     }
@@ -243,9 +243,9 @@ namespace Arches
                 var output = example.Value as AbstractImage;
                 ISet<int> candidateSet = new HashSet<int>(new[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
 
-                for (int i = 0; i < output.ddata.Length; i++)
+                for (int i = 0; i < output.abstract_data.Length; i++)
                 {
-                    ISet<int> colorSet = output.ddata[i].ToSet();
+                    ISet<int> colorSet = output.abstract_data[i].ToSet();
                     if (!colorSet.Contains(0))
                     {
                         candidateSet.IntersectWith(colorSet);
@@ -314,7 +314,7 @@ namespace Arches
                     {
                         for (int j = 0; j < output.w; j++)
                         {
-                            preimage.ddata[i * preimage.w + j] = output.ddata[i * output.w + (output.w - j - 1)];
+                            preimage.abstract_data[i * preimage.w + j] = output.abstract_data[i * output.w + (output.w - j - 1)];
                         }
                     }
                 }
@@ -324,7 +324,7 @@ namespace Arches
                     {
                         for (int j = 0; j < output.w; j++)
                         {
-                            preimage.ddata[i * preimage.w + j] = output.ddata[(output.h - i - 1) * output.w + j];
+                            preimage.abstract_data[i * preimage.w + j] = output.abstract_data[(output.h - i - 1) * output.w + j];
                         }
                     }
                 }
@@ -336,7 +336,7 @@ namespace Arches
                             for (int j = 0; j < preimage.w; j++) // m = preimage.w
                             {
                                 // preimage[i,j] = output[j,n-1-i];
-                                preimage.ddata[i * preimage.w + j] = output.ddata[j * output.w + (output.w - 1 - i)];
+                                preimage.abstract_data[i * preimage.w + j] = output.abstract_data[j * output.w + (output.w - 1 - i)];
                             }
                         }
                 }

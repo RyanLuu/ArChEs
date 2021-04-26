@@ -101,7 +101,7 @@ namespace Arches
     {
         public int x, y;
         public int w, h;
-        public  AbstractValue[] ddata;
+        public  AbstractValue[] abstract_data;
 
         public AbstractImage(int x, int y, int w, int h)
         {
@@ -109,10 +109,10 @@ namespace Arches
             this.y = y;
             this.w = w;
             this.h = h;
-            this.ddata = new  AbstractValue[w * h];
-            for (int i = 0; i < this.ddata.Length; i++)
+            this.abstract_data = new  AbstractValue[w * h];
+            for (int i = 0; i < this.abstract_data.Length; i++)
             {
-                this.ddata[i] = new  AbstractValue();  // all pixels are empty set
+                this.abstract_data[i] = new  AbstractValue();  // all pixels are empty set
             }
         }
 
@@ -122,10 +122,10 @@ namespace Arches
             this.y = image.y;
             this.w = image.w;
             this.h = image.h;
-            this.ddata = new  AbstractValue[image.data.Length];
-            for (int i = 0; i < this.ddata.Length; i++)
+            this.abstract_data = new  AbstractValue[image.data.Length];
+            for (int i = 0; i < this.abstract_data.Length; i++)
             {
-                this.ddata[i] = new  AbstractValue(new List<int> { image.data[i] });
+                this.abstract_data[i] = new  AbstractValue(new List<int> { image.data[i] });
             }
         }
 
@@ -136,9 +136,9 @@ namespace Arches
 
         public bool isEmptySet()
         {
-            for (int i = 0; i < this.ddata.Length; i++)
+            for (int i = 0; i < this.abstract_data.Length; i++)
             {
-                if (this.ddata[i].IsEmpty())
+                if (this.abstract_data[i].IsEmpty())
                 {
                     return true;
                 }
@@ -152,7 +152,7 @@ namespace Arches
             {
                 return new  AbstractValue( AbstractConstants.ANY);
             }
-            return this.ddata[(ay - this.y) * this.w + (ax - this.x)];
+            return this.abstract_data[(ay - this.y) * this.w + (ax - this.x)];
         }
 
         public void setAbstractValueAtPixel(int ax, int ay,  AbstractValue d)
@@ -161,15 +161,15 @@ namespace Arches
             {
                 throw new ArgumentOutOfRangeException();
             }
-            this.ddata[(ay - this.y) * this.w + (ax - this.x)] = d;
+            this.abstract_data[(ay - this.y) * this.w + (ax - this.x)] = d;
         }
 
         public override string ToString()
         {
             string ret = "";
-            for (int i = 0; i < this.ddata.Length; i++)
+            for (int i = 0; i < this.abstract_data.Length; i++)
             {
-                ret += this.ddata[i] + " ";
+                ret += this.abstract_data[i] + " ";
                 if (i % this.w == this.w - 1)
                 {
                     ret += "\n";
@@ -189,9 +189,9 @@ namespace Arches
             {
                 return false;
             }
-            for (int i = 0; i < this.ddata.Length; i++)
+            for (int i = 0; i < this.abstract_data.Length; i++)
             {
-                if (this.ddata[i] != other.ddata[i])
+                if (this.abstract_data[i] != other.abstract_data[i])
                 {
                     return false;
                 }
