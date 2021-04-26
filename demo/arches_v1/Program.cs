@@ -182,7 +182,7 @@ t    Translation");
                 example.Print();
                 Console.Out.WriteLine();
                 State inputState = State.CreateForExecution(Grammar.InputSymbol, new Image(example.input));
-                Examples.Add(inputState, new DisjunctiveImage(new Image(example.output)));
+                Examples.Add(inputState, new AbstractImage(new Image(example.output)));
             }
 
             if (equivalences.Count() > 0 || invariants.Count() > 0)
@@ -199,7 +199,7 @@ t    Translation");
                         newExample.Print();
                         Console.Out.WriteLine();
                         State newInState = State.CreateForExecution(Grammar.InputSymbol, newIn);
-                        Examples.Add(newInState, new DisjunctiveImage(newOut));
+                        Examples.Add(newInState, new AbstractImage(newOut));
                     }
                 }
                 foreach (Invariant eq in equivalences)
@@ -213,13 +213,13 @@ t    Translation");
                         newExample.Print();
                         Console.Out.WriteLine();
                         State newInState = State.CreateForExecution(Grammar.InputSymbol, newIn);
-                        Examples.Add(newInState, new DisjunctiveImage(newOut));
+                        Examples.Add(newInState, new AbstractImage(newOut));
                     }
                 }
             }
 
             //var spec = new ExampleSpec(Examples);
-            var spec = new DisjunctiveImageSpec(Examples);
+            var spec = new AbstractImageSpec(Examples);
 
             var scoreFeature = new RankingScore(Grammar);
             int K = 4;

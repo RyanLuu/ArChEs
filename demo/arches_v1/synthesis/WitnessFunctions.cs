@@ -16,127 +16,127 @@ namespace Arches
         }
 
         [WitnessFunction(nameof(Semantics.Compose), 0, DependsOnParameters = new[] { 1 })]
-        public DisjunctiveImageSpec WitnessCompose_A(GrammarRule rule, DisjunctiveImageSpec spec, DisjunctiveImageSpec bSpec)
+        public AbstractImageSpec WitnessCompose_A(GrammarRule rule, AbstractImageSpec spec, AbstractImageSpec bSpec)
         {
             var result = new Dictionary<State, object>();
             foreach (var example in spec.dis)
             {
                 State inputState = example.Key;
-                var output = example.Value as DisjunctiveImage;
+                var output = example.Value as AbstractImage;
                 if (output.isEmptySet())
                 {
                     return null;
                 }
-                DisjunctiveImage b = (DisjunctiveImage) bSpec.dis[inputState];
+                AbstractImage b = (AbstractImage) bSpec.dis[inputState];
                 
-                DisjunctiveImage preimage = new DisjunctiveImage(output.x, output.y, output.w, output.h);
+                AbstractImage preimage = new AbstractImage(output.x, output.y, output.w, output.h);
                 for (int ay = preimage.y; ay < preimage.y + preimage.h; ay++)
                 {
                     for (int ax = preimage.x; ax < preimage.x + preimage.w; ax++)
                     {
-                        Disjunction od = output.getDisjunction(ax, ay);
+                        AbstractValue od = output.getAbstractValueAtPixel(ax, ay);
                         if (b.InBounds(ax, ay))
                         {
-                            Disjunction bd = b.getDisjunction(ax, ay);
+                            AbstractValue bd = b.getAbstractValueAtPixel(ax, ay);
                             if (bd.Allows(0))
                             {
-                                if (od.Equals(Disjunctions.ZERO))
+                                if (od.Equals(AbstractConstants.ZERO))
                                 {
                                     // output is zero ==> a and b must be zero
                                     if (!bd.Allows(0))
                                     {
                                         return null;
                                     }
-                                    preimage.setDisjunction(ax, ay, new Disjunction(Disjunctions.ZERO));
+                                    preimage.setAbstractValueAtPixel(ax, ay, new AbstractValue(AbstractConstants.ZERO));
                                 }
                                 else // output is zero or nonzero
                                 {
-                                    if (Disjunction.Intersect(bd, od).IsEmpty())
+                                    if (AbstractValue.Intersect(bd, od).IsEmpty())
                                     {
                                         // output != b ==> b = 0, a must satisfy output
                                         if (!bd.Allows(0))
                                         {
                                             return null;
                                         }
-                                        preimage.setDisjunction(ax, ay, new Disjunction(od.d)); // clone out of fear and respect
+                                        preimage.setAbstractValueAtPixel(ax, ay, new AbstractValue(od.d)); // clone out of fear and respect
                                     }
                                     else
                                     {
                                         // b can satisfy output, a can be anything
-                                        preimage.setDisjunction(ax, ay, new Disjunction(Disjunctions.ANY));
+                                        preimage.setAbstractValueAtPixel(ax, ay, new AbstractValue(AbstractConstants.ANY));
                                     }
                                 }
                             }
                             else
                             {
-                                if (Disjunction.Intersect(bd, od).IsEmpty())
+                                if (AbstractValue.Intersect(bd, od).IsEmpty())
                                 {
                                     return null; // b and output are disjunct
                                 }
                                 else
                                 {
                                     // b overwrites a; a can be anything
-                                    preimage.setDisjunction(ax, ay, new Disjunction(Disjunctions.ANY));
+                                    preimage.setAbstractValueAtPixel(ax, ay, new AbstractValue(AbstractConstants.ANY));
                                 }
                             }
                         }
                         else
                         {
-                            preimage.setDisjunction(ax, ay, new Disjunction(od.d)); // clone out of fear and respect
+                            preimage.setAbstractValueAtPixel(ax, ay, new AbstractValue(od.d)); // clone out of fear and respect
                         }
                         
                     }
                 }
                 result[inputState] = preimage;
             }
-            return new DisjunctiveImageSpec(result);
+            return new AbstractImageSpec(result);
         }
 
         [WitnessFunction(nameof(Semantics.Compose), 1)]
-        public DisjunctiveImageSpec WitnessCompose_B(GrammarRule rule, DisjunctiveImageSpec spec)
+        public AbstractImageSpec WitnessCompose_B(GrammarRule rule, AbstractImageSpec spec)
         {
             var result = new Dictionary<State, object>();
             foreach (var example in spec.dis)
             {
                 State inputState = example.Key;
-                var output = example.Value as DisjunctiveImage;
+                var output = example.Value as AbstractImage;
                 if (output.isEmptySet())
                 {
                     return null;
                 }
 
-                DisjunctiveImage preimage = new DisjunctiveImage(output.x, output.y, output.w, output.h);
+                AbstractImage preimage = new AbstractImage(output.x, output.y, output.w, output.h);
                 for (int ay = preimage.y; ay < preimage.y + preimage.h; ay++)
                 {
                     for (int ax = preimage.x; ax < preimage.x + preimage.w; ax++)
                     {
-                        Disjunction od = output.getDisjunction(ax, ay);
-                        preimage.setDisjunction(ax, ay, new Disjunction(od.d).UnionWith(new Disjunction(Disjunctions.ZERO)));
+                        AbstractValue od = output.getAbstractValueAtPixel(ax, ay);
+                        preimage.setAbstractValueAtPixel(ax, ay, new AbstractValue(od.d).UnionWith(new AbstractValue(AbstractConstants.ZERO)));
                     }
                 }
                 result[inputState] = preimage;
             }
-            return new DisjunctiveImageSpec(result);
+            return new AbstractImageSpec(result);
         }
 
         // Witness for single in Recolor
         // Given output image return all possible preimages
-        // Because there would be trillions of preimages use the DisjunctiveImageSpec for a compact representation
+        // Because there would be trillions of preimages use the AbstractImageSpec for a compact representation
         // 10 -> Match any color except 0
         // -x -> Match any color except x
         // The DependsOnParameter allows us to use the color value in this function
         // colorSpec allows us to know what the color that the other Recolor witness function selected for this image
         [WitnessFunction(nameof(Semantics.Recolor), 0, DependsOnParameters = new[] { 1 })]
-        public DisjunctiveImageSpec WitnessRecolor_SingleParam(GrammarRule rule, DisjunctiveImageSpec spec, ExampleSpec colorSpec)
+        public AbstractImageSpec WitnessRecolor_SingleParam(GrammarRule rule, AbstractImageSpec spec, ExampleSpec colorSpec)
         {
             var result = new Dictionary<State, object>();
             foreach (var example in spec.dis)
             {
                 State inputState = example.Key;
-                var output = example.Value as DisjunctiveImage;
+                var output = example.Value as AbstractImage;
                 int color = (int)colorSpec.Examples[inputState];
                 // create blank preimage
-                DisjunctiveImage preimage = new DisjunctiveImage(output.x, output.y, output.w, output.h);
+                AbstractImage preimage = new AbstractImage(output.x, output.y, output.w, output.h);
                 // loop through all pixels of output image
                 for (int i = 0; i < output.ddata.Length; i++)
                 {
@@ -144,11 +144,11 @@ namespace Arches
 
                     if (colorSet.Contains(0))
                     {
-                        preimage.ddata[i].UnionWith(new Disjunction(new List<int> { 0 }));
+                        preimage.ddata[i].UnionWith(new AbstractValue(new List<int> { 0 }));
                     }
                     if (colorSet.Contains(color))
                     {
-                        preimage.ddata[i].UnionWith(new Disjunction(Disjunctions.NONZERO));
+                        preimage.ddata[i].UnionWith(new AbstractValue(AbstractConstants.NONZERO));
                     }
                     if (preimage.ddata[i].IsEmpty()) // empty set (output not 0 or color)
                     {
@@ -157,7 +157,7 @@ namespace Arches
                 }
                 result[inputState] = preimage;
             }
-            return new DisjunctiveImageSpec(result);
+            return new AbstractImageSpec(result);
         }
 
         // Witness for color attribute of Recolor
@@ -165,14 +165,14 @@ namespace Arches
         // Because the other witness function depends on this one we cannot know the preimage
         // However the preimage is not needed to figure out what the color value could be
         [WitnessFunction(nameof(Semantics.Recolor), 1)]
-        //public DisjunctiveExamplesSpec WitnessRecolor_ColorParam_DepSingle(GrammarRule rule, ExampleSpec spec, DisjunctiveImageSpec singleSpec)
-        public DisjunctiveExamplesSpec WitnessRecolor_ColorParam(GrammarRule rule, DisjunctiveImageSpec spec)
+        //public DisjunctiveExamplesSpec WitnessRecolor_ColorParam_DepSingle(GrammarRule rule, ExampleSpec spec, AbstractImageSpec singleSpec)
+        public DisjunctiveExamplesSpec WitnessRecolor_ColorParam(GrammarRule rule, AbstractImageSpec spec)
         {
             var result = new Dictionary<State, IEnumerable<object>>();
             foreach (KeyValuePair<State, object> example in spec.dis)
             {
                 State inputState = example.Key;
-                var output = example.Value as DisjunctiveImage;
+                var output = example.Value as AbstractImage;
                 ISet<int> candidateSet = new HashSet<int>(new [] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
 
                 for (int i = 0; i < output.ddata.Length; i++)
@@ -190,22 +190,22 @@ namespace Arches
 
         // Witness for single in Filter
         // Given output image return all possible preimages
-        // Because there would be trillions of preimages use the DisjunctiveImageSpec for a compact representation
+        // Because there would be trillions of preimages use the AbstractImageSpec for a compact representation
         // 10 -> Match any color except 0
         // -x -> Match any color except x
         // The DependsOnParameter allows us to use the color value in this function
         // colorSpec allows us to know what the color that the other Filter witness function selected for this image 
         [WitnessFunction(nameof(Semantics.FilterColor), 0, DependsOnParameters = new[] { 1 })]
-        public DisjunctiveImageSpec WitnessFilter_SingleParam(GrammarRule rule, DisjunctiveImageSpec spec, ExampleSpec colorSpec)
+        public AbstractImageSpec WitnessFilter_SingleParam(GrammarRule rule, AbstractImageSpec spec, ExampleSpec colorSpec)
         {
             var result = new Dictionary<State, object>();
             foreach (var example in spec.dis)
             {
                 State inputState = example.Key;
-                var output = example.Value as DisjunctiveImage;
+                var output = example.Value as AbstractImage;
                 int color = (int)colorSpec.Examples[inputState];
                 // create blank preimage
-                DisjunctiveImage preimage = new DisjunctiveImage(output.x, output.y, output.w, output.h);
+                AbstractImage preimage = new AbstractImage(output.x, output.y, output.w, output.h);
                 // loop through all pixels of output image
                 for (int i = 0; i < output.ddata.Length; i++)
                 {
@@ -213,11 +213,11 @@ namespace Arches
 
                     if (colorSet.Contains(0))
                     {
-                        preimage.ddata[i].UnionWith(new Disjunction(new List<int> { color }).Complement());
+                        preimage.ddata[i].UnionWith(new AbstractValue(new List<int> { color }).Complement());
                     }
                     if (colorSet.Contains(color))
                     {
-                        preimage.ddata[i].UnionWith(new Disjunction(new List<int> { color }));
+                        preimage.ddata[i].UnionWith(new AbstractValue(new List<int> { color }));
                     }
                     if (preimage.ddata[i].IsEmpty()) // empty set (output not 0 or color)
                     {
@@ -226,7 +226,7 @@ namespace Arches
                 }
                 result[inputState] = preimage;
             }
-            return new DisjunctiveImageSpec(result);
+            return new AbstractImageSpec(result);
         }
 
         // Witness for color attribute of Filter
@@ -234,13 +234,13 @@ namespace Arches
         // Because the other witness function depends on this one we cannot know the preimage
         // However the preimage is not needed to figure out what the color value could be 
         [WitnessFunction(nameof(Semantics.FilterColor), 1)]
-        public DisjunctiveExamplesSpec WitnessFilter_ColorParam(GrammarRule rule, DisjunctiveImageSpec spec)
+        public DisjunctiveExamplesSpec WitnessFilter_ColorParam(GrammarRule rule, AbstractImageSpec spec)
         {
             var result = new Dictionary<State, IEnumerable<object>>();
             foreach (KeyValuePair<State, object> example in spec.dis)
             {
                 State inputState = example.Key;
-                var output = example.Value as DisjunctiveImage;
+                var output = example.Value as AbstractImage;
                 ISet<int> candidateSet = new HashSet<int>(new[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
 
                 for (int i = 0; i < output.ddata.Length; i++)
@@ -260,7 +260,7 @@ namespace Arches
         // Trivially, this is going to imply ALL of them, since for any 
         // output matrix, we can claim there existed some rotation or flip
         [WitnessFunction(nameof(Semantics.Orthogonal), 1)]
-        public DisjunctiveExamplesSpec WitnessOrthogonal_OrthOptionParam(GrammarRule rule, DisjunctiveImageSpec spec)
+        public DisjunctiveExamplesSpec WitnessOrthogonal_OrthOptionParam(GrammarRule rule, AbstractImageSpec spec)
         {
             var result = new Dictionary<State, IEnumerable<object>>();
             int Y_AXIS = 0;
@@ -286,7 +286,7 @@ namespace Arches
         */
 
         [WitnessFunction(nameof(Semantics.Orthogonal), 0, DependsOnParameters = new[] { 1 })]
-        public DisjunctiveImageSpec WitnessOrthogonal_SingleParam(GrammarRule rule, DisjunctiveImageSpec spec, ExampleSpec orthOptionSpec)
+        public AbstractImageSpec WitnessOrthogonal_SingleParam(GrammarRule rule, AbstractImageSpec spec, ExampleSpec orthOptionSpec)
         {
             var result = new Dictionary<State, object>();
             int Y_AXIS = 0;
@@ -295,16 +295,16 @@ namespace Arches
             foreach (KeyValuePair<State, object> example in spec.dis)
             {
                 State inputState = example.Key;
-                var output = example.Value as DisjunctiveImage;
+                var output = example.Value as AbstractImage;
                 int orthOption = (int)orthOptionSpec.Examples[inputState];
-                DisjunctiveImage preimage = null;
+                AbstractImage preimage = null;
                 // TODO: We want to handle changes in x and y
                 if (orthOption == Y_AXIS || orthOption == X_AXIS)
                 {
-                    preimage = new DisjunctiveImage(output.x, output.y, output.w, output.h);
+                    preimage = new AbstractImage(output.x, output.y, output.w, output.h);
                 }
                 else if (orthOption == ROT_90) {
-                    preimage = new DisjunctiveImage(output.x, output.y, output.h, output.w);
+                    preimage = new AbstractImage(output.x, output.y, output.h, output.w);
                 }
                 else {throw new NotSupportedException("We don't support that option for Orthogonal yet");}
 
@@ -343,11 +343,11 @@ namespace Arches
                 else {throw new NotSupportedException("We don't support that option for Orthogonal yet");}
                 result[inputState] = preimage;
             }
-            return new DisjunctiveImageSpec(result);
+            return new AbstractImageSpec(result);
         }
 
         [WitnessFunction(nameof(Semantics.Identity), 0)]
-        public DisjunctiveExamplesSpec WitnessIdentity(GrammarRule rule, DisjunctiveImageSpec spec)
+        public DisjunctiveExamplesSpec WitnessIdentity(GrammarRule rule, AbstractImageSpec spec)
         {
             var result = new Dictionary<State, IEnumerable<object>>();
 
@@ -355,9 +355,9 @@ namespace Arches
             {
                 State inputState = example.Key;
                 // extract output image
-                var output = example.Value as DisjunctiveImage;
+                var output = example.Value as AbstractImage;
                 if (output == null) { return null; }
-                var occurrences = new List<DisjunctiveImage>();
+                var occurrences = new List<AbstractImage>();
                 occurrences.Add(output);
                 result[inputState] = occurrences.Cast<object>();
             }
