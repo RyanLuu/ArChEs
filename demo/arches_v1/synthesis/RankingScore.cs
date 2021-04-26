@@ -31,9 +31,9 @@ namespace Arches
         }
 
         [FeatureCalculator(nameof(Semantics.Compose))]
-        public static double Compose(double a, double b)
+        public static double Compose(double top, double bottom)
         {
-            return a + b;
+            return top + bottom;
         }
 
         [FeatureCalculator(nameof(Semantics.Origin))]

@@ -15,11 +15,11 @@ namespace Arches
         {
         }
 
-        [WitnessFunction(nameof(Semantics.Compose), 0, DependsOnParameters = new[] { 1 })]
-        public AbstractImageSpec WitnessCompose_A(GrammarRule rule, AbstractImageSpec spec, AbstractImageSpec bSpec)
+        [WitnessFunction(nameof(Semantics.Compose), 1, DependsOnParameters = new[] { 0 })]
+        public AbstractImageSpec WitnessCompose_BottomParam(GrammarRule rule, AbstractImageSpec spec, AbstractImageSpec topSpec)
         {
             var result = new Dictionary<State, object>();
-            foreach (var example in spec.dis)
+            foreach (var example in spec.AbstractImageExamples)
             {
                 State inputState = example.Key;
                 var output = example.Value as AbstractImage;
@@ -27,79 +27,126 @@ namespace Arches
                 {
                     return null;
                 }
-                AbstractImage b = (AbstractImage) bSpec.dis[inputState];
-                
-                AbstractImage preimage = new AbstractImage(output.x, output.y, output.w, output.h);
-                for (int ay = preimage.y; ay < preimage.y + preimage.h; ay++)
+                AbstractImage top_image = (AbstractImage)topSpec.AbstractImageExamples[inputState];
+                // TODO: Handle different dimensions for bottom_preimage, currently we assume output is proper dimension
+                AbstractImage bottom_preimage = new AbstractImage(output.x, output.y, output.w, output.h);
+                for (int ay = bottom_preimage.y; ay < bottom_preimage.y + bottom_preimage.h; ay++)
                 {
-                    for (int ax = preimage.x; ax < preimage.x + preimage.w; ax++)
+                    for (int ax = bottom_preimage.x; ax < bottom_preimage.x + bottom_preimage.w; ax++)
                     {
-                        AbstractValue od = output.getAbstractValueAtPixel(ax, ay);
-                        if (b.InBounds(ax, ay))
+                        AbstractValue output_ab_val = output.getAbstractValueAtPixel(ax, ay);
+                        if (top_image.InBounds(ax, ay)) // Checking that the x and y coords are in the bounds for top_image 
                         {
-                            AbstractValue bd = b.getAbstractValueAtPixel(ax, ay);
-                            if (bd.Allows(0))
+                            AbstractValue top_image_ab_val = output.getAbstractValueAtPixel(ax, ay);
+                            // If output is zero
+                            if (output_ab_val.IsEmpty())
                             {
-                                if (od.Equals(AbstractConstants.ZERO))
+                                // If top_image doesn't just contain 0 (includes some nonzeros)
+                                if (!top_image_ab_val.IsEmpty())
                                 {
-                                    // output is zero ==> a and b must be zero
-                                    if (!bd.Allows(0))
-                                    {
-                                        return null;
-                                    }
-                                    preimage.setAbstractValueAtPixel(ax, ay, new AbstractValue(AbstractConstants.ZERO));
+                                    // If the top_image doesn't allow 0, this is impossible. Return null
+                                    if (!top_image_ab_val.Allows(0)) { return null; }
+                                    // otherwise, if top image does allow 0, our bottom_preimage must be 0 here
+                                    else { bottom_preimage.setAbstractValueAtPixel(ax, ay, new AbstractValue(0)); }
                                 }
-                                else // output is zero or nonzero
-                                {
-                                    if (AbstractValue.Intersect(bd, od).IsEmpty())
-                                    {
-                                        // output != b ==> b = 0, a must satisfy output
-                                        if (!bd.Allows(0))
-                                        {
-                                            return null;
-                                        }
-                                        preimage.setAbstractValueAtPixel(ax, ay, new AbstractValue(od.d)); // clone out of fear and respect
-                                    }
-                                    else
-                                    {
-                                        // b can satisfy output, a can be anything
-                                        preimage.setAbstractValueAtPixel(ax, ay, new AbstractValue(AbstractConstants.ANY));
-                                    }
-                                }
+                                // top_image is just 0, so our bottom_preimage must also be 0 here
+                                else { bottom_preimage.setAbstractValueAtPixel(ax, ay, new AbstractValue(0)); }
                             }
-                            else
+                            // TODO: Code cleanup... Merge these 2 else if branches below
+                            // output is ONLY nonzeros
+                            else if (!output_ab_val.Allows(0))
                             {
-                                if (AbstractValue.Intersect(bd, od).IsEmpty())
+                                if (!top_image_ab_val.IsEmpty())
                                 {
-                                    return null; // b and output are disjunct
+                                    // If the top_image doesn't allow 0, that's cool. 
+                                    // It means that our bottom_preimage can contain literally anything
+                                    // since its contents will be completely ignored
+                                    if (!top_image_ab_val.Allows(0))
+                                    {
+                                        bottom_preimage.setAbstractValueAtPixel(ax, ay,
+                                         new AbstractValue(AbstractConstants.ANY));
+                                    }
+                                    // otherwise, if top image does allow 0, our bottom preimage
+                                    // can take on the union of top_image's nonzero values and 
+                                    // the values in output
+                                    // Example:
+                                    // output: [1,2,3]
+                                    // top: [0,1]
+                                    // bottom: [1,2,3] 
+                                    else {  
+                                        // First, sanity check! Ensure the nonzero elements of top
+                                        // are contained within output, otherwise that's bad and we return null
+                                        AbstractValue nonzero_top_image_ab_vals = AbstractValue.Intersect(
+                                            new AbstractValue(AbstractConstants.NONZERO),
+                                            top_image_ab_val
+                                        );
+                                        if (!output_ab_val.ContainsAllColors(nonzero_top_image_ab_vals)) {return null;}
+                                        // Now, easy-peasy, just set bottom_preimage to output
+                                        bottom_preimage.setAbstractValueAtPixel(ax, ay, new AbstractValue(output_ab_val.d)); 
+                                    }
                                 }
-                                else
-                                {
-                                    // b overwrites a; a can be anything
-                                    preimage.setAbstractValueAtPixel(ax, ay, new AbstractValue(AbstractConstants.ANY));
-                                }
+                                // top_image is just 0, so our bottom_preimage must be set to output
+                                else { bottom_preimage.setAbstractValueAtPixel(ax, ay, new AbstractValue(output_ab_val.d)); }
                             }
+                            // output contains nonzero AND allows 0
+                            else if (output_ab_val.Allows(0))
+                            {
+                                if (!top_image_ab_val.IsEmpty())
+                                {
+                                    // If the top_image doesn't allow 0, that's bad!  
+                                    // means we can't get 0 on output, so return null
+                                    if (!top_image_ab_val.Allows(0)) {return null;}
+                                    // otherwise, if top image does allow 0, our bottom preimage
+                                    // can take on the union of top_image's nonzero values and 
+                                    // the nonzero values in output
+                                    // Example:
+                                    // output: [0,1,2,3]
+                                    // top: [0,1]
+                                    // bottom: [1,2,3] 
+                                    else {  
+                                        // First, sanity check! Ensure the nonzero elements of top
+                                        // are contained within nonzero els of output, otherwise that's bad and we return null
+                                        AbstractValue nonzero_top_image_ab_vals = AbstractValue.Intersect(
+                                            new AbstractValue(AbstractConstants.NONZERO),
+                                            top_image_ab_val
+                                        );
+                                        AbstractValue nonzero_output_ab_vals = AbstractValue.Intersect(
+                                            new AbstractValue(AbstractConstants.NONZERO),
+                                            output_ab_val
+                                        );
+                                        if (!nonzero_output_ab_vals.ContainsAllColors(nonzero_top_image_ab_vals)) {return null;}
+                                        // Now, easy-peasy, just set bottom_preimage to (nonzero elements) of output
+                                        bottom_preimage.setAbstractValueAtPixel(ax, ay, new AbstractValue(nonzero_output_ab_vals.d)); 
+                                    }
+                                }
+                                // top_image is just 0, so our bottom_preimage must be set to output
+                                else { bottom_preimage.setAbstractValueAtPixel(ax, ay, new AbstractValue(output_ab_val.d)); }
+
+                            }
+                            else { throw new Exception("We should not have thrown this. Check WitnessCompose_BottomParam."); }
                         }
                         else
                         {
-                            preimage.setAbstractValueAtPixel(ax, ay, new AbstractValue(od.d)); // clone out of fear and respect
+                            // TODO: Determine if we want to support this? 
+                            bottom_preimage.setAbstractValueAtPixel(ax, ay, new AbstractValue(output_ab_val.d)); // clone out of fear and respect
                         }
-                        
+
                     }
                 }
-                result[inputState] = preimage;
+                result[inputState] = bottom_preimage;
             }
             return new AbstractImageSpec(result);
         }
 
-        [WitnessFunction(nameof(Semantics.Compose), 1)]
-        public AbstractImageSpec WitnessCompose_B(GrammarRule rule, AbstractImageSpec spec)
+        [WitnessFunction(nameof(Semantics.Compose), 0)]
+        public AbstractImageSpec WitnessCompose_TopParam(GrammarRule rule, AbstractImageSpec spec)
         {
             var result = new Dictionary<State, object>();
-            foreach (var example in spec.dis)
+            foreach (var example in spec.AbstractImageExamples)
             {
                 State inputState = example.Key;
                 var output = example.Value as AbstractImage;
+                // TODO: Determine if this is a problem
                 if (output.isEmptySet())
                 {
                     return null;
@@ -130,7 +177,7 @@ namespace Arches
         public AbstractImageSpec WitnessRecolor_SingleParam(GrammarRule rule, AbstractImageSpec spec, ExampleSpec colorSpec)
         {
             var result = new Dictionary<State, object>();
-            foreach (var example in spec.dis)
+            foreach (var example in spec.AbstractImageExamples)
             {
                 State inputState = example.Key;
                 var output = example.Value as AbstractImage;
@@ -169,11 +216,11 @@ namespace Arches
         public DisjunctiveExamplesSpec WitnessRecolor_ColorParam(GrammarRule rule, AbstractImageSpec spec)
         {
             var result = new Dictionary<State, IEnumerable<object>>();
-            foreach (KeyValuePair<State, object> example in spec.dis)
+            foreach (KeyValuePair<State, object> example in spec.AbstractImageExamples)
             {
                 State inputState = example.Key;
                 var output = example.Value as AbstractImage;
-                ISet<int> candidateSet = new HashSet<int>(new [] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
+                ISet<int> candidateSet = new HashSet<int>(new[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
 
                 for (int i = 0; i < output.abstract_data.Length; i++)
                 {
@@ -199,7 +246,7 @@ namespace Arches
         public AbstractImageSpec WitnessFilter_SingleParam(GrammarRule rule, AbstractImageSpec spec, ExampleSpec colorSpec)
         {
             var result = new Dictionary<State, object>();
-            foreach (var example in spec.dis)
+            foreach (var example in spec.AbstractImageExamples)
             {
                 State inputState = example.Key;
                 var output = example.Value as AbstractImage;
@@ -237,7 +284,7 @@ namespace Arches
         public DisjunctiveExamplesSpec WitnessFilter_ColorParam(GrammarRule rule, AbstractImageSpec spec)
         {
             var result = new Dictionary<State, IEnumerable<object>>();
-            foreach (KeyValuePair<State, object> example in spec.dis)
+            foreach (KeyValuePair<State, object> example in spec.AbstractImageExamples)
             {
                 State inputState = example.Key;
                 var output = example.Value as AbstractImage;
@@ -266,10 +313,10 @@ namespace Arches
             int Y_AXIS = 0;
             int X_AXIS = 1;
             int ROT_90 = 2;
-            foreach (KeyValuePair<State, object> example in spec.dis)
+            foreach (KeyValuePair<State, object> example in spec.AbstractImageExamples)
             {
                 State inputState = example.Key;
-                
+
                 var occurrences = new List<int>();
                 occurrences.Add(Y_AXIS);
                 occurrences.Add(X_AXIS);
@@ -292,7 +339,7 @@ namespace Arches
             int Y_AXIS = 0;
             int X_AXIS = 1;
             int ROT_90 = 2;
-            foreach (KeyValuePair<State, object> example in spec.dis)
+            foreach (KeyValuePair<State, object> example in spec.AbstractImageExamples)
             {
                 State inputState = example.Key;
                 var output = example.Value as AbstractImage;
@@ -303,10 +350,11 @@ namespace Arches
                 {
                     preimage = new AbstractImage(output.x, output.y, output.w, output.h);
                 }
-                else if (orthOption == ROT_90) {
+                else if (orthOption == ROT_90)
+                {
                     preimage = new AbstractImage(output.x, output.y, output.h, output.w);
                 }
-                else {throw new NotSupportedException("We don't support that option for Orthogonal yet");}
+                else { throw new NotSupportedException("We don't support that option for Orthogonal yet"); }
 
                 if (orthOption == Y_AXIS)
                 {
@@ -331,16 +379,16 @@ namespace Arches
                 else if (orthOption == ROT_90)
                 {
                     // TODO: Verify this
-                        for (int i = 0; i < preimage.h; i++) // n = preimage.h
+                    for (int i = 0; i < preimage.h; i++) // n = preimage.h
+                    {
+                        for (int j = 0; j < preimage.w; j++) // m = preimage.w
                         {
-                            for (int j = 0; j < preimage.w; j++) // m = preimage.w
-                            {
-                                // preimage[i,j] = output[j,n-1-i];
-                                preimage.abstract_data[i * preimage.w + j] = output.abstract_data[j * output.w + (output.w - 1 - i)];
-                            }
+                            // preimage[i,j] = output[j,n-1-i];
+                            preimage.abstract_data[i * preimage.w + j] = output.abstract_data[j * output.w + (output.w - 1 - i)];
                         }
+                    }
                 }
-                else {throw new NotSupportedException("We don't support that option for Orthogonal yet");}
+                else { throw new NotSupportedException("We don't support that option for Orthogonal yet"); }
                 result[inputState] = preimage;
             }
             return new AbstractImageSpec(result);
@@ -351,7 +399,7 @@ namespace Arches
         {
             var result = new Dictionary<State, IEnumerable<object>>();
 
-            foreach (var example in spec.dis)
+            foreach (var example in spec.AbstractImageExamples)
             {
                 State inputState = example.Key;
                 // extract output image

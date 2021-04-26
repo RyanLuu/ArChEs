@@ -108,25 +108,27 @@ namespace Arches
             return image;
         }
 
-        public static Image Compose(Image a, Image b)
+        public static Image Compose(Image top, Image bottom)
         {
-            int left = Math.Min(a.x, b.x);
-            int right = Math.Max(a.x + a.w, b.x + b.w);
-            int top = Math.Min(a.y, b.y);
-            int bottom = Math.Max(a.y + a.h, b.y + b.h);
-            Image ret = new Image(left, top, right - left, bottom - top);
-            for (int ay = a.y; ay < a.y + a.h; ay++)
+            int left = Math.Min(top.x, bottom.x);
+            int right = Math.Max(top.x + top.w, bottom.x + bottom.w);
+            int upper_box = Math.Min(top.y, bottom.y);
+            int lower_box = Math.Max(top.y + top.h, bottom.y + bottom.h);
+            Image ret = new Image(left, upper_box, right - left, lower_box - upper_box);
+            for (int ay = top.y; ay < top.y + top.h; ay++)
             {
-                for (int ax = a.x; ax < a.x + a.w; ax++)
+                for (int ax = top.x; ax < top.x + top.w; ax++)
                 {
-                    ret.setPixel(ax, ay, a.getPixel(ax, ay));
+                    ret.setPixel(ax, ay, top.getPixel(ax, ay));
                 }
             }
-            for (int ay = b.y; ay < b.y + b.h; ay++)
+            for (int ay = bottom.y; ay < bottom.y + bottom.h; ay++)
             {
-                for (int ax = b.x; ax < b.x + b.w; ax++)
+                for (int ax = bottom.x; ax < bottom.x + bottom.w; ax++)
                 {
-                    ret.setPixel(ax, ay, b.getPixel(ax, ay));
+                    if (!ret.getPixel(ax,ay).Equals(0)) { // ensure it's nonzero, before writing
+                        ret.setPixel(ax, ay, bottom.getPixel(ax, ay));
+                    }
                 }
             }
             return ret;

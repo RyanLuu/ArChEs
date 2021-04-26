@@ -41,6 +41,20 @@ namespace Arches
             return ((d >> color) & 1) == 1;
         }
 
+        public bool ContainsAllColors(AbstractValue ab_val)
+        {
+            bool result = true;
+            for (int i = 0; i < 10; i++)
+            {
+                if (ab_val.Allows(i) && !this.Allows(i))
+                {
+                    result = false;
+                    break;
+                }
+            }
+            return result;
+        }
+
         public ISet<int> ToSet()
         {
             ISet<int> ret = new HashSet<int>();
@@ -203,15 +217,15 @@ namespace Arches
     public class AbstractImageSpec : Spec
     {
 
-        public IDictionary<State, object> dis;
-        public AbstractImageSpec(IDictionary<State, object> dis) : base(dis.Keys)
+        public IDictionary<State, object> AbstractImageExamples;
+        public AbstractImageSpec(IDictionary<State, object> AbstractImageExamples) : base(AbstractImageExamples.Keys)
         {
-            this.dis = dis;
+            this.AbstractImageExamples = AbstractImageExamples;
         }
 
         protected override bool CorrectOnProvided(State state, object output)
         {
-            AbstractImage space = this.dis[state] as AbstractImage;
+            AbstractImage space = this.AbstractImageExamples[state] as AbstractImage;
             Image candidate = output as Image;
             
             for (int ay = space.y; ay < space.y + space.h; ay++)
@@ -230,14 +244,14 @@ namespace Arches
         protected override bool EqualsOnInput(State state, Spec other)
         {
             AbstractImageSpec otherDIS = (AbstractImageSpec)other;
-            AbstractImage d0 = (AbstractImage)this.dis[state];
-            AbstractImage d1 = (AbstractImage)otherDIS.dis[state];
+            AbstractImage d0 = (AbstractImage)this.AbstractImageExamples[state];
+            AbstractImage d1 = (AbstractImage)otherDIS.AbstractImageExamples[state];
             return d0.Equals(d1);
         }
 
         protected override int GetHashCodeOnInput(State state)
         {
-            return this.dis[state].GetHashCode();
+            return this.AbstractImageExamples[state].GetHashCode();
         }
 
         protected override XElement InputToXML(State input, Dictionary<object, int> identityCache)
@@ -253,9 +267,9 @@ namespace Arches
         protected override Spec TransformInputs(Func<State, State> transformer)
         {
             var result = new Dictionary<State, object>();
-            foreach (var input in this.dis.Keys)
+            foreach (var input in this.AbstractImageExamples.Keys)
             {
-                result[transformer(input)] = this.dis[input];
+                result[transformer(input)] = this.AbstractImageExamples[input];
             }
             return new AbstractImageSpec(result);
         }
