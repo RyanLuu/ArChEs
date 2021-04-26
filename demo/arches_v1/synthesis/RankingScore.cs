@@ -30,6 +30,12 @@ namespace Arches
             return image + orth_option;
         }
 
+        [FeatureCalculator(nameof(Semantics.Compose))]
+        public static double Compose(double a, double b)
+        {
+            return a + b;
+        }
+
         [FeatureCalculator(nameof(Semantics.Origin))]
         public static double Origin(double image)
         {

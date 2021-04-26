@@ -34,6 +34,24 @@ namespace Arches
             }
         }
 
+        public void setPixel(int ax, int ay, int val)
+        {
+            if (ax < this.x || ay < this.y || ax >= this.x + this.w || ay >= this.y + this.h)
+            {
+                throw new ArgumentOutOfRangeException();
+            }
+            this.data[(ay - this.y) * this.w + (ax - this.x)] = val;
+        }
+
+        public int getPixel(int ax, int ay)
+        {
+            if (ax < this.x || ay < this.y || ax >= this.x + this.w || ay >= this.y + this.h)
+            {
+                return 0;
+            }
+            return this.data[(ay - this.y) * this.w + (ax - this.x)];
+        }
+
         public bool isEmpty()
         {
             for (int i = 0; i < data.Length; i++)

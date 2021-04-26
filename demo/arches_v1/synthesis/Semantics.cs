@@ -1,4 +1,6 @@
-﻿namespace Arches
+﻿using System;
+
+namespace Arches
 {
     public static class Semantics
     {
@@ -104,6 +106,30 @@
         public static Image Identity(Image image)
         {
             return image;
+        }
+
+        public static Image Compose(Image a, Image b)
+        {
+            int left = Math.Min(a.x, b.x);
+            int right = Math.Max(a.x + a.w, b.x + b.w);
+            int top = Math.Min(a.y, b.y);
+            int bottom = Math.Max(a.y + a.h, b.y + b.h);
+            Image ret = new Image(left, top, right - left, bottom - top);
+            for (int ay = a.y; ay < a.y + a.h; ay++)
+            {
+                for (int ax = a.x; ax < a.x + a.w; ax++)
+                {
+                    ret.setPixel(ax, ay, a.getPixel(ax, ay));
+                }
+            }
+            for (int ay = b.y; ay < b.y + b.h; ay++)
+            {
+                for (int ax = b.x; ax < b.x + b.w; ax++)
+                {
+                    ret.setPixel(ax, ay, b.getPixel(ax, ay));
+                }
+            }
+            return ret;
         }
 
         public static Image Compress(Image image)

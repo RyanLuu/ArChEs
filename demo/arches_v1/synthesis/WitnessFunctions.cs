@@ -15,6 +15,110 @@ namespace Arches
         {
         }
 
+        [WitnessFunction(nameof(Semantics.Compose), 0, DependsOnParameters = new[] { 1 })]
+        public DisjunctiveImageSpec WitnessCompose_A(GrammarRule rule, DisjunctiveImageSpec spec, DisjunctiveImageSpec bSpec)
+        {
+            var result = new Dictionary<State, object>();
+            foreach (var example in spec.dis)
+            {
+                State inputState = example.Key;
+                var output = example.Value as DisjunctiveImage;
+                if (output.isEmptySet())
+                {
+                    return null;
+                }
+                DisjunctiveImage b = (DisjunctiveImage) bSpec.dis[inputState];
+                
+                DisjunctiveImage preimage = new DisjunctiveImage(output.x, output.y, output.w, output.h);
+                for (int ay = preimage.y; ay < preimage.y + preimage.h; ay++)
+                {
+                    for (int ax = preimage.x; ax < preimage.x + preimage.w; ax++)
+                    {
+                        Disjunction od = output.getDisjunction(ax, ay);
+                        if (b.InBounds(ax, ay))
+                        {
+                            Disjunction bd = b.getDisjunction(ax, ay);
+                            if (bd.Allows(0))
+                            {
+                                if (od.Equals(Disjunctions.ZERO))
+                                {
+                                    // output is zero ==> a and b must be zero
+                                    if (!bd.Allows(0))
+                                    {
+                                        return null;
+                                    }
+                                    preimage.setDisjunction(ax, ay, new Disjunction(Disjunctions.ZERO));
+                                }
+                                else // output is zero or nonzero
+                                {
+                                    if (Disjunction.Intersect(bd, od).IsEmpty())
+                                    {
+                                        // output != b ==> b = 0, a must satisfy output
+                                        if (!bd.Allows(0))
+                                        {
+                                            return null;
+                                        }
+                                        preimage.setDisjunction(ax, ay, new Disjunction(od.d)); // clone out of fear and respect
+                                    }
+                                    else
+                                    {
+                                        // b can satisfy output, a can be anything
+                                        preimage.setDisjunction(ax, ay, new Disjunction(Disjunctions.ANY));
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                if (Disjunction.Intersect(bd, od).IsEmpty())
+                                {
+                                    return null; // b and output are disjunct
+                                }
+                                else
+                                {
+                                    // b overwrites a; a can be anything
+                                    preimage.setDisjunction(ax, ay, new Disjunction(Disjunctions.ANY));
+                                }
+                            }
+                        }
+                        else
+                        {
+                            preimage.setDisjunction(ax, ay, new Disjunction(od.d)); // clone out of fear and respect
+                        }
+                        
+                    }
+                }
+                result[inputState] = preimage;
+            }
+            return new DisjunctiveImageSpec(result);
+        }
+
+        [WitnessFunction(nameof(Semantics.Compose), 1)]
+        public DisjunctiveImageSpec WitnessCompose_B(GrammarRule rule, DisjunctiveImageSpec spec)
+        {
+            var result = new Dictionary<State, object>();
+            foreach (var example in spec.dis)
+            {
+                State inputState = example.Key;
+                var output = example.Value as DisjunctiveImage;
+                if (output.isEmptySet())
+                {
+                    return null;
+                }
+
+                DisjunctiveImage preimage = new DisjunctiveImage(output.x, output.y, output.w, output.h);
+                for (int ay = preimage.y; ay < preimage.y + preimage.h; ay++)
+                {
+                    for (int ax = preimage.x; ax < preimage.x + preimage.w; ax++)
+                    {
+                        Disjunction od = output.getDisjunction(ax, ay);
+                        preimage.setDisjunction(ax, ay, new Disjunction(od.d).UnionWith(new Disjunction(Disjunctions.ZERO)));
+                    }
+                }
+                result[inputState] = preimage;
+            }
+            return new DisjunctiveImageSpec(result);
+        }
+
         // Witness for single in Recolor
         // Given output image return all possible preimages
         // Because there would be trillions of preimages use the DisjunctiveImageSpec for a compact representation
@@ -36,17 +140,17 @@ namespace Arches
                 // loop through all pixels of output image
                 for (int i = 0; i < output.ddata.Length; i++)
                 {
-                    ISet<int> colorSet = DisjunctiveImage.DisjunctToSet(output.ddata[i]);
+                    ISet<int> colorSet = output.ddata[i].ToSet();
 
                     if (colorSet.Contains(0))
                     {
-                        preimage.ddata[i] |= DisjunctiveImage.ColorToDisjunct(0);
+                        preimage.ddata[i].UnionWith(new Disjunction(new List<int> { 0 }));
                     }
                     if (colorSet.Contains(color))
                     {
-                        preimage.ddata[i] |= DisjunctiveImage.DisjunctNonzero;
+                        preimage.ddata[i].UnionWith(new Disjunction(Disjunctions.NONZERO));
                     }
-                    if (preimage.ddata[i] == 0) // empty set (output not 0 or color)
+                    if (preimage.ddata[i].IsEmpty()) // empty set (output not 0 or color)
                     {
                         return null;
                     }
@@ -73,7 +177,7 @@ namespace Arches
 
                 for (int i = 0; i < output.ddata.Length; i++)
                 {
-                    ISet<int> colorSet = DisjunctiveImage.DisjunctToSet(output.ddata[i]);
+                    ISet<int> colorSet = output.ddata[i].ToSet();
                     if (!colorSet.Contains(0))
                     {
                         candidateSet.IntersectWith(colorSet);
@@ -105,17 +209,17 @@ namespace Arches
                 // loop through all pixels of output image
                 for (int i = 0; i < output.ddata.Length; i++)
                 {
-                    ISet<int> colorSet = DisjunctiveImage.DisjunctToSet(output.ddata[i]);
+                    ISet<int> colorSet = output.ddata[i].ToSet();
 
                     if (colorSet.Contains(0))
                     {
-                        preimage.ddata[i] |= DisjunctiveImage.DisjunctComplement(DisjunctiveImage.ColorToDisjunct(color));
+                        preimage.ddata[i].UnionWith(new Disjunction(new List<int> { color }).Complement());
                     }
                     if (colorSet.Contains(color))
                     {
-                        preimage.ddata[i] |= DisjunctiveImage.ColorToDisjunct(color);
+                        preimage.ddata[i].UnionWith(new Disjunction(new List<int> { color }));
                     }
-                    if (preimage.ddata[i] == 0) // empty set (output not 0 or color)
+                    if (preimage.ddata[i].IsEmpty()) // empty set (output not 0 or color)
                     {
                         return null;
                     }
@@ -141,7 +245,7 @@ namespace Arches
 
                 for (int i = 0; i < output.ddata.Length; i++)
                 {
-                    ISet<int> colorSet = DisjunctiveImage.DisjunctToSet(output.ddata[i]);
+                    ISet<int> colorSet = output.ddata[i].ToSet();
                     if (!colorSet.Contains(0))
                     {
                         candidateSet.IntersectWith(colorSet);
