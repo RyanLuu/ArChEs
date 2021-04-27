@@ -52,7 +52,7 @@ namespace Arches
 				Console.Write(" --> ");
 				for (int j = 0; j <= output.GetUpperBound(1); j++)
 				{
-					if (input.GetUpperBound(0) >= i)
+					if (output.GetUpperBound(0) >= i)
 					{
 						Console.BackgroundColor = Image.colorMap(output[i, j]);
 						Console.Write(output[i, j]);
