@@ -25,9 +25,14 @@ namespace Arches
             this.d = 0; // empty set
         }
 
-        public  AbstractValue(int d)
+        public  AbstractValue(AbstractValue ab_val) // We expect this to be a color!
         {
-            this.d = d;
+            this.d = ab_val.d;
+        }
+
+        public  AbstractValue(int internal_data) // We expect this to NOT be a color!
+        {
+            this.d = internal_data;
         }
 
         public  AbstractValue(List<int> colors)
@@ -55,6 +60,14 @@ namespace Arches
             return result;
         }
 
+
+         public int HammingWeight()
+        {
+            // count number of 1 bits in the d int
+            int count = 0;
+            for (int i = 0; i < 10; i++) {if (this.Allows(i)) {count++;}}
+            return count;
+        }
         public ISet<int> ToSet()
         {
             ISet<int> ret = new HashSet<int>();
@@ -140,7 +153,19 @@ namespace Arches
             for (int i = 0; i < this.abstract_data.Length; i++)
             {
                 this.abstract_data[i] = new  AbstractValue(new List<int> { image.data[i] });
+                Program.DEBUG("");
+                Program.DEBUG("" + image.data[i]);
+                Program.DEBUG("" + this.abstract_data[i]);
+                Program.DEBUG("");
             }
+        }
+        public AbstractImage(AbstractImage abstract_image)
+        {
+            this.x = abstract_image.x;
+            this.y = abstract_image.y;
+            this.w = abstract_image.w;
+            this.h = abstract_image.h;
+            this.abstract_data = (AbstractValue[]) abstract_image.abstract_data.Clone();
         }
 
         public bool InBounds(int ax, int ay)
@@ -227,17 +252,27 @@ namespace Arches
         {
             AbstractImage space = this.AbstractImageExamples[state] as AbstractImage;
             Image candidate = output as Image;
-            
+            Program.DEBUG("space");
+            Program.DEBUG(space.ToString());
+            Program.DEBUG("candidate");
+            Program.DEBUG(candidate.ToString());
+
             for (int ay = space.y; ay < space.y + space.h; ay++)
             {
                 for (int ax = space.x; ax < space.x + space.w; ax++)
                 {
                     if (!space.getAbstractValueAtPixel(ax, ay).Allows(candidate.getPixel(ax, ay)))
                     {
+                        Program.DEBUG(String.Format("space[{0},{1}] = {2}",ax,ay,space.getAbstractValueAtPixel(ax,ay)));
+                        Program.DEBUG(String.Format("candidate[{0},{1}] = {2}",ax,ay,candidate.getPixel(ax,ay)));
+                        Program.DEBUG(String.Format("{0},{1}",ax,ay));
+
+                        Program.DEBUG("false");
                         return false;
                     }
                 }
             }
+                        Program.DEBUG("true");
             return true;
         }
 
