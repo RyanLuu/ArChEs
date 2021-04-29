@@ -7,9 +7,13 @@ Ongoing program synthesis project for Purdue CS560 - Reasoning About Programs Co
 
 ## Documents
 
-[Initial Project Proposal](https://github.com/RyanLuu/ArChEs/blob/main/docs/ArChEs%20Proposal.pdf)
+[Final Presentation presented in Class](https://github.com/RyanLuu/ArChEs/blob/main/docs/Arches%20Final%20Class%20Presentation.pdf)
+
+[Final Paper presented in Class](https://github.com/RyanLuu/ArChEs/blob/main/docs/Arches_Final_Paper.pdf)
 
 [Partial Paper for Project](https://github.com/RyanLuu/ArChEs/blob/main/docs/CS560_Partial_Paper.pdf)
+
+[Initial Project Proposal](https://github.com/RyanLuu/ArChEs/blob/main/docs/ArChEs%20Proposal.pdf)
 
 ## Description
 
