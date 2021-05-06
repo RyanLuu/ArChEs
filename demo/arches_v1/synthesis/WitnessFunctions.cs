@@ -38,6 +38,7 @@ namespace Arches
                     return null;
                 }
 
+
                 // TODO: Handle different dimensions for bottom_preimage, currently we assume output is proper dimension
                 // Future Idea: use NONE values or some sort of NEGATIVE value to indicate "out of bounds, but still a
                 // viable candidate if a top image overwhelmed me. Could make all images arbitrarily sized, like 100x100 or something
@@ -50,7 +51,7 @@ namespace Arches
                         AbstractValue output_ab_val = output.GetAbstractValueAtPixel(ax, ay);
                         if (top_image.InBounds(ax, ay)) // Checking that the x and y coords are in the bounds for top_image 
                         {
-                            AbstractValue top_image_ab_val = output.GetAbstractValueAtPixel(ax, ay);
+                            AbstractValue top_image_ab_val = top_image.GetAbstractValueAtPixel(ax, ay);
                             // ONLY could allow 0 on output (thus top and bottom must both be 0)
                             if (output_ab_val.Equals(AbstractConstants.ZERO))
                             {
@@ -68,12 +69,12 @@ namespace Arches
                                 }
                             }
                             // Output is ONLY nonzeros
-                            else if (!output_ab_val.Allows(0))
+                            else if (!output_ab_val.AllowsColor(0))
                             {
                                 // If the top_image doesn't allow 0, that's cool. 
                                 // It means that our bottom_preimage can contain literally anything
                                 // since its contents will be completely ignored
-                                if (!top_image_ab_val.Allows(0))
+                                if (!top_image_ab_val.AllowsColor(0))
                                 {
                                     // But, the abstract domains must be equivalent between output and top in this case
                                     if (top_image_ab_val.Equals(output_ab_val)) {
@@ -90,7 +91,7 @@ namespace Arches
                                 // takes on the the nonzero values in output
                                 // Example:
                                 // output: [1,2,3]
-                                // top: [0,1]
+                                // top: [0,1,2,3]
                                 // bottom: [1,2,3] 
                                 else
                                 {
@@ -110,11 +111,11 @@ namespace Arches
                                 }
                             }
                             // output contains nonzero AND allows 0
-                            else if (output_ab_val.Allows(0) && output_ab_val.HammingWeight() > 1)
+                            else if (output_ab_val.AllowsColor(0) && output_ab_val.HammingWeight() > 1)
                             {
                                 // If the top_image doesn't allow 0, that's bad!  
                                 // means we can't get 0 on output, so return null
-                                if (!top_image_ab_val.Allows(0))
+                                if (!top_image_ab_val.AllowsColor(0))
                                 {
                                     Program.DEBUG("null from WitnessCompose_BottomParam --> top image didn't allow 0, which is impossible given output accepts zero (and some other nonzeros)");
                                     return null;
@@ -171,8 +172,8 @@ namespace Arches
                 {
                     for (int ax = preimage.x; ax < preimage.x + preimage.w; ax++)
                     {
-                        AbstractValue od = output.GetAbstractValueAtPixel(ax, ay);
-                        preimage.SetAbstractValueAtPixel(ax, ay, new AbstractValue(od.d).UnionWith(new AbstractValue(AbstractConstants.ZERO)));
+                        AbstractValue output_ab_val = output.GetAbstractValueAtPixel(ax, ay);
+                        preimage.SetAbstractValueAtPixel(ax, ay, output_ab_val.Clone().UnionWith(new AbstractValue(AbstractConstants.ZERO)));
                     }
                 }
                 result[inputState] = preimage;
@@ -205,12 +206,12 @@ namespace Arches
                 for (int i = 0; i < output.abstract_data.Length; i++)
                 {
                     // TODO: 
-                    if (output.abstract_data[i].Allows(0))
+                    if (output.abstract_data[i].AllowsColor(0))
                     {
                         // TODO: change this back to normal
                         preimage.abstract_data[i] = preimage.abstract_data[i].UnionWith(new AbstractValue(AbstractConstants.ZERO));
                     }
-                    if (output.abstract_data[i].Allows(color))
+                    if (output.abstract_data[i].AllowsColor(color))
                     {
                         preimage.abstract_data[i] = preimage.abstract_data[i].UnionWith(new AbstractValue(AbstractConstants.NONZERO));
                     }

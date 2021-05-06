@@ -45,8 +45,15 @@ namespace Arches
             return new AbstractValue(this);
         }
 
-        public bool Allows(int color)
+        public bool AllowsColor(int color)
         {
+            /*
+            Console.WriteLine();
+            Console.WriteLine(d);
+            Console.WriteLine(d>>color);
+            Console.WriteLine((d>>color) & 1);
+            Console.WriteLine();
+            */
             return ((d >> color) & 1) == 1;
         }
 
@@ -63,7 +70,7 @@ namespace Arches
         {
             // count number of 1 bits in the d int
             int count = 0;
-            for (int i = 0; i < 10; i++) {if (this.Allows(i)) {count++;}}
+            for (int i = 0; i < 10; i++) {if (this.AllowsColor(i)) {count++;}}
             return count;
         }
         public ISet<int> ToSet()
@@ -71,7 +78,7 @@ namespace Arches
             ISet<int> ret = new HashSet<int>();
             for (int i = 0; i < 10; i++)
             {
-                if (Allows(i))
+                if (AllowsColor(i))
                 {
                     ret.Add(i);
                 }
@@ -259,7 +266,7 @@ namespace Arches
             {
                 for (int ax = space.x; ax < space.x + space.w; ax++)
                 {
-                    if (!space.GetAbstractValueAtPixel(ax, ay).Allows(candidate.getPixel(ax, ay)))
+                    if (!space.GetAbstractValueAtPixel(ax, ay).AllowsColor(candidate.getPixel(ax, ay)))
                     {
                         Program.DEBUG(String.Format("space[{0},{1}] = {2}",ax,ay,space.GetAbstractValueAtPixel(ax,ay)));
                         Program.DEBUG(String.Format("candidate[{0},{1}] = {2}",ax,ay,candidate.getPixel(ax,ay)));
