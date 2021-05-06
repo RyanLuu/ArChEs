@@ -18,7 +18,8 @@ namespace Arches
     {
         public static Random rnd = new Random();
 
-        public static bool DEBUG_STATUS = false;
+        public static bool DEBUG_STATUS = true;
+        //public static bool DEBUG_STATUS = false;
         public static void DEBUG(string debug_message) {
             if (DEBUG_STATUS) {Console.WriteLine(debug_message);}
         }
@@ -235,7 +236,7 @@ t    Translation");
                 var counter = 1;
                 foreach (ProgramNode program in topPrograms.RealizedPrograms)
                 {
-                    if (counter > 4) break;
+                    if (counter > K) break;
                     Console.Out.WriteLine("==========================");
                     Console.Out.WriteLine("Program {0}: ", counter);
                     Console.Out.WriteLine(program.PrintAST(ASTSerializationFormat.HumanReadable));
@@ -267,6 +268,9 @@ t    Translation");
                 Example result = Example.FromImages(newInput, _topProgram.Invoke(newInputState) as Image);
                 Console.Out.WriteLine("RESULT:");
                 result.Print();
+                if (result.ToString() == example.ToString()) {
+                Console.Out.WriteLine("\nCORRECT ON TEST\n");
+                }
             }
         }
 
