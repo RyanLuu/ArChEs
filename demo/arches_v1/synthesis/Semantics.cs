@@ -115,6 +115,7 @@ namespace Arches
             int upper_box = Math.Min(top.y, bottom.y);
             int lower_box = Math.Max(top.y + top.h, bottom.y + bottom.h);
             Image ret = new Image(left, upper_box, right - left, lower_box - upper_box);
+            // ORDER MATTERS: Top should be written prior to bottom
             for (int ay = top.y; ay < top.y + top.h; ay++)
             {
                 for (int ax = top.x; ax < top.x + top.w; ax++)
@@ -126,7 +127,7 @@ namespace Arches
             {
                 for (int ax = bottom.x; ax < bottom.x + bottom.w; ax++)
                 {
-                    if (!ret.getPixel(ax,ay).Equals(0)) { // ensure it's nonzero, before writing
+                    if (ret.getPixel(ax,ay) == 0) { // ensure output has 0 opening before writing bottom
                         ret.setPixel(ax, ay, bottom.getPixel(ax, ay));
                     }
                 }
