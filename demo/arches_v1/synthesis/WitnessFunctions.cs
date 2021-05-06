@@ -18,86 +18,95 @@ namespace Arches
         [WitnessFunction(nameof(Semantics.Compose), 1, DependsOnParameters = new[] { 0 })]
         public AbstractImageSpec WitnessCompose_BottomParam(GrammarRule rule, AbstractImageSpec spec, AbstractImageSpec topSpec)
         {
-
             Program.DEBUG("Entered WitnessCompose_BottomParam");
             var result = new Dictionary<State, object>();
             foreach (var example in spec.AbstractImageExamples)
             {
                 State inputState = example.Key;
                 var output = example.Value as AbstractImage;
-                if (output.isEmptySet())
+                if (output.ContainsNoneValue())
                 {
-                    Program.DEBUG("null from WitnessCompose_BottomParam --> output.isEmptySet()");
+                    Program.DEBUG("null from WitnessCompose_BottomParam --> output contained NONE value");
                     return null;
                 }
                 AbstractImage top_image = (AbstractImage)topSpec.AbstractImageExamples[inputState];
+                // If either the top_image or output contain a pixel with "NONE" as output, then
+                // it's an invalid candidate image 
+                if (top_image.ContainsNoneValue())
+                {
+                    Program.DEBUG("null from WitnessCompose_BottomParam --> top contained NONE value");
+                    return null;
+                }
+
                 // TODO: Handle different dimensions for bottom_preimage, currently we assume output is proper dimension
+                // Future Idea: use NONE values or some sort of NEGATIVE value to indicate "out of bounds, but still a
+                // viable candidate if a top image overwhelmed me. Could make all images arbitrarily sized, like 100x100 or something
+                // to enable composition
                 AbstractImage bottom_preimage = new AbstractImage(output.x, output.y, output.w, output.h);
                 for (int ay = bottom_preimage.y; ay < bottom_preimage.y + bottom_preimage.h; ay++)
                 {
                     for (int ax = bottom_preimage.x; ax < bottom_preimage.x + bottom_preimage.w; ax++)
                     {
-                        AbstractValue output_ab_val = output.getAbstractValueAtPixel(ax, ay);
+                        AbstractValue output_ab_val = output.GetAbstractValueAtPixel(ax, ay);
                         if (top_image.InBounds(ax, ay)) // Checking that the x and y coords are in the bounds for top_image 
                         {
-                            AbstractValue top_image_ab_val = output.getAbstractValueAtPixel(ax, ay);
-                            // If either the top_image or the output images allowed no values (not even 0), then return null
-                            // as we've entered an invalid state
-                            if (top_image_ab_val.IsEmpty() || output_ab_val.IsEmpty())
+                            AbstractValue top_image_ab_val = output.GetAbstractValueAtPixel(ax, ay);
+                            // ONLY could allow 0 on output (thus top and bottom must both be 0)
+                            if (output_ab_val.Equals(AbstractConstants.ZERO))
                             {
-                                Program.DEBUG("null from WitnessCompose_BottomParam --> top or output contained no valid values");
-                                return null;
-                            }
-                            // Check if we ONLY allow 0 on output (HammingWeight is the # of 1 bits in our inner representation)
-                            if (output_ab_val.Allows(0) && output_ab_val.HammingWeight() == 1)
-                            {
-                                // If the top_image doesn't allow 0, this is impossible. Return null
-                                if (!top_image_ab_val.Allows(0))
+                                // If the top image isn't ONLY 0, then it's impossible to produce an output that is ONLY 0
+                                if (!top_image_ab_val.Equals(AbstractConstants.ZERO))
                                 {
                                     Program.DEBUG("null from WitnessCompose_BottomParam --> top image didn't allow 0");
                                     return null;
                                 }
-                                // if it allows 0 and no other values, that's good, just return 0 for bottom
-                                else if (top_image_ab_val.HammingWeight() >= 1)
+                                // Top image IS only 0, so the only value must be 0 for the bottom preimage
+                                else
                                 {
-                                    bottom_preimage.setAbstractValueAtPixel(ax, ay,
+                                    bottom_preimage.SetAbstractValueAtPixel(ax, ay,
                                             new AbstractValue(AbstractConstants.ZERO));
                                 }
-                                else { throw new Exception("WitnessCompose_BottomParam --> This shouldn't happen"); }
                             }
-                            // output is ONLY nonzeros
-                            else if (!output_ab_val.Allows(0) && output_ab_val.HammingWeight() >= 1)
+                            // Output is ONLY nonzeros
+                            else if (!output_ab_val.Allows(0))
                             {
                                 // If the top_image doesn't allow 0, that's cool. 
                                 // It means that our bottom_preimage can contain literally anything
                                 // since its contents will be completely ignored
                                 if (!top_image_ab_val.Allows(0))
                                 {
-                                    bottom_preimage.setAbstractValueAtPixel(ax, ay,
-                                     new AbstractValue(AbstractConstants.ANY));
+                                    // But, the abstract domains must be equivalent between output and top in this case
+                                    if (top_image_ab_val.Equals(output_ab_val)) {
+                                        bottom_preimage.SetAbstractValueAtPixel(ax, ay,
+                                            new AbstractValue(AbstractConstants.ANY));
+                                    }
+                                    // Otherwise, no bottom preimage could be generated to satisfy this
+                                    else {
+                                        Program.DEBUG("null from WitnessCompose_BottomParam --> top != output");
+                                        return null;
+                                    }
                                 }
                                 // otherwise, if top image does allow 0, our bottom preimage
-                                // can take on the union of top_image's nonzero values and 
-                                // the values in output
+                                // takes on the the nonzero values in output
                                 // Example:
                                 // output: [1,2,3]
                                 // top: [0,1]
                                 // bottom: [1,2,3] 
                                 else
                                 {
-                                    // First, sanity check! Ensure the nonzero elements of top
-                                    // are contained within output, otherwise that's bad and we return null
                                     AbstractValue nonzero_top_image_ab_vals = AbstractValue.Intersect(
                                         new AbstractValue(AbstractConstants.NONZERO),
                                         top_image_ab_val
                                     );
+                                    // First, sanity check! Ensure the nonzero elements of top
+                                    // are contained within output, otherwise that's bad and we return null
                                     if (!output_ab_val.ContainsAllColors(nonzero_top_image_ab_vals))
                                     {
                                         Program.DEBUG("null from WitnessCompose_BottomParam --> output val wasn't superset of nonzero top vals");
                                         return null;
                                     }
                                     // Now, easy-peasy, just set bottom_preimage to output
-                                    bottom_preimage.setAbstractValueAtPixel(ax, ay, new AbstractValue(output_ab_val.d));
+                                    bottom_preimage.SetAbstractValueAtPixel(ax, ay, output_ab_val.Clone());
                                 }
                             }
                             // output contains nonzero AND allows 0
@@ -110,41 +119,29 @@ namespace Arches
                                     Program.DEBUG("null from WitnessCompose_BottomParam --> top image didn't allow 0, which is impossible given output accepts zero (and some other nonzeros)");
                                     return null;
                                 }
-                                // otherwise, if top image does allow 0, our bottom preimage
-                                // can take on the union of top_image's nonzero values and 
-                                // the nonzero values in output
+                                // otherwise, if top image does allow 0, our bottom preimage is the values on output
                                 // Example:
                                 // output: [0,1,2,3]
                                 // top: [0,1]
-                                // bottom: [1,2,3] 
+                                // bottom: [0,1,2,3] 
                                 else
                                 {
-                                    // First, sanity check! Ensure the nonzero elements of top
-                                    // are contained within nonzero els of output, otherwise that's bad and we return null
-                                    AbstractValue nonzero_top_image_ab_vals = AbstractValue.Intersect(
-                                        new AbstractValue(AbstractConstants.NONZERO),
-                                        top_image_ab_val
-                                    );
-                                    AbstractValue nonzero_output_ab_vals = AbstractValue.Intersect(
-                                        new AbstractValue(AbstractConstants.NONZERO),
-                                        output_ab_val
-                                    );
-                                    if (!nonzero_output_ab_vals.ContainsAllColors(nonzero_top_image_ab_vals))
+                                    // First, sanity check! Ensure the elements of top 
+                                    // are contained within elementss of output, invalid 
+                                    if (!output_ab_val.ContainsAllColors(top_image_ab_val))
                                     {
-
                                         Program.DEBUG("null from WitnessCompose_BottomParam --> nonzero output val wasn't superset of nonzero top vals");
                                         return null;
                                     }
-                                    // Now, easy-peasy, just set bottom_preimage to (nonzero elements) of output
-                                    bottom_preimage.setAbstractValueAtPixel(ax, ay, new AbstractValue(nonzero_output_ab_vals.d));
+                                    // Now, set to the values of output 
+                                    bottom_preimage.SetAbstractValueAtPixel(ax, ay, output_ab_val.Clone());
                                 }
                             }
                             else { throw new Exception("We should not have thrown this. Check WitnessCompose_BottomParam."); }
                         }
                         else
                         {
-                            // TODO: Determine if we want to support this? 
-                            bottom_preimage.setAbstractValueAtPixel(ax, ay, new AbstractValue(output_ab_val.d)); // clone out of fear and respect
+                            bottom_preimage.SetAbstractValueAtPixel(ax, ay, output_ab_val.Clone()); // clone out of fear and respect
                         }
 
                     }
@@ -163,9 +160,9 @@ namespace Arches
             {
                 State inputState = example.Key;
                 var output = example.Value as AbstractImage;
-                // TODO: Determine if this is a problem
-                if (output.isEmptySet())
-                {
+                // None values are meaningless, so we don't consider them
+                if (output.ContainsNoneValue()){
+                    Program.DEBUG("Returning null from WitnessCompose_TopParam --> output contained NONE value");
                     return null;
                 }
 
@@ -174,8 +171,8 @@ namespace Arches
                 {
                     for (int ax = preimage.x; ax < preimage.x + preimage.w; ax++)
                     {
-                        AbstractValue od = output.getAbstractValueAtPixel(ax, ay);
-                        preimage.setAbstractValueAtPixel(ax, ay, new AbstractValue(od.d).UnionWith(new AbstractValue(AbstractConstants.ZERO)));
+                        AbstractValue od = output.GetAbstractValueAtPixel(ax, ay);
+                        preimage.SetAbstractValueAtPixel(ax, ay, new AbstractValue(od.d).UnionWith(new AbstractValue(AbstractConstants.ZERO)));
                     }
                 }
                 result[inputState] = preimage;
@@ -185,38 +182,37 @@ namespace Arches
 
         // Witness for single in Recolor
         // Given output image return all possible preimages
-        // Because there would be trillions of preimages use the AbstractImageSpec for a compact representation
-        // 10 -> Match any color except 0
-        // -x -> Match any color except x
         // The DependsOnParameter allows us to use the color value in this function
         // colorSpec allows us to know what the color that the other Recolor witness function selected for this image
         [WitnessFunction(nameof(Semantics.Recolor), 0, DependsOnParameters = new[] { 1 })]
         public AbstractImageSpec WitnessRecolor_SingleParam(GrammarRule rule, AbstractImageSpec spec, ExampleSpec colorSpec)
         {
+            Program.DEBUG("Entering WitnessRecolor_SingleParam");
             var result = new Dictionary<State, object>();
             foreach (var example in spec.AbstractImageExamples)
             {
                 State inputState = example.Key;
                 var output = example.Value as AbstractImage;
+                // None values are meaningless, so we don't consider them
+                if (output.ContainsNoneValue()){
+                    Program.DEBUG("Returning null from WitnessRecolor_SingleParam --> output contained NONE value");
+                    return null;
+                }
                 int color = (int)colorSpec.Examples[inputState];
                 // create blank preimage
                 AbstractImage preimage = new AbstractImage(output.x, output.y, output.w, output.h);
                 // loop through all pixels of output image
                 for (int i = 0; i < output.abstract_data.Length; i++)
                 {
-                    ISet<int> colorSet = output.abstract_data[i].ToSet();
-
-                    if (colorSet.Contains(0))
+                    // TODO: 
+                    if (output.abstract_data[i].Allows(0))
                     {
-                        preimage.abstract_data[i].UnionWith(new AbstractValue(new List<int> { 0 }));
+                        // TODO: change this back to normal
+                        preimage.abstract_data[i] = preimage.abstract_data[i].UnionWith(new AbstractValue(AbstractConstants.ZERO));
                     }
-                    if (colorSet.Contains(color))
+                    if (output.abstract_data[i].Allows(color))
                     {
-                        preimage.abstract_data[i].UnionWith(new AbstractValue(AbstractConstants.NONZERO));
-                    }
-                    if (preimage.abstract_data[i].IsEmpty()) // empty set (output not 0 or color)
-                    {
-                        return null;
+                        preimage.abstract_data[i] = preimage.abstract_data[i].UnionWith(new AbstractValue(AbstractConstants.NONZERO));
                     }
                 }
                 result[inputState] = preimage;
@@ -237,8 +233,12 @@ namespace Arches
             {
                 State inputState = example.Key;
                 var output = example.Value as AbstractImage;
+                // None values are meaningless, so we don't consider them
+                if (output.ContainsNoneValue()){
+                    Program.DEBUG("Returning null from WitnessRecolor_ColorParam --> output contained NONE value");
+                    return null;
+                }
                 ISet<int> candidateSet = new HashSet<int>(new[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
-
                 for (int i = 0; i < output.abstract_data.Length; i++)
                 {
                     ISet<int> colorSet = output.abstract_data[i].ToSet();
@@ -254,9 +254,6 @@ namespace Arches
 
         // Witness for single in Filter
         // Given output image return all possible preimages
-        // Because there would be trillions of preimages use the AbstractImageSpec for a compact representation
-        // 10 -> Match any color except 0
-        // -x -> Match any color except x
         // The DependsOnParameter allows us to use the color value in this function
         // colorSpec allows us to know what the color that the other Filter witness function selected for this image 
         [WitnessFunction(nameof(Semantics.FilterColor), 0, DependsOnParameters = new[] { 1 })]
@@ -267,6 +264,11 @@ namespace Arches
             {
                 State inputState = example.Key;
                 var output = example.Value as AbstractImage;
+                // None values are meaningless, so we don't consider them
+                if (output.ContainsNoneValue()){
+                    Program.DEBUG("Returning null from WitnessFilter_SingleParam --> output contained NONE value");
+                    return null;
+                }
                 int color = (int)colorSpec.Examples[inputState];
                 // create blank preimage
                 AbstractImage preimage = new AbstractImage(output.x, output.y, output.w, output.h);
@@ -282,10 +284,6 @@ namespace Arches
                     if (colorSet.Contains(color))
                     {
                         preimage.abstract_data[i].UnionWith(new AbstractValue(new List<int> { color }));
-                    }
-                    if (preimage.abstract_data[i].IsEmpty()) // empty set (output not 0 or color)
-                    {
-                        return null;
                     }
                 }
                 result[inputState] = preimage;
@@ -305,6 +303,11 @@ namespace Arches
             {
                 State inputState = example.Key;
                 var output = example.Value as AbstractImage;
+                // None values are meaningless, so we don't consider them
+                if (output.ContainsNoneValue()){
+                    Program.DEBUG("Returning null from WitnessFilter_ColorParam --> output contained NONE value");
+                    return null;
+                }
                 ISet<int> candidateSet = new HashSet<int>(new[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
 
                 for (int i = 0; i < output.abstract_data.Length; i++)
@@ -360,6 +363,11 @@ namespace Arches
             {
                 State inputState = example.Key;
                 var output = example.Value as AbstractImage;
+                // None values are meaningless, so we don't consider them
+                if (output.ContainsNoneValue()){
+                    Program.DEBUG("Returning null from WitnessOrthogonal_SingleParam --> output contained NONE value");
+                    return null;
+                }
                 int orthOption = (int)orthOptionSpec.Examples[inputState];
                 AbstractImage preimage = null;
                 // TODO: We want to handle changes in x and y
@@ -421,6 +429,11 @@ namespace Arches
                 State inputState = example.Key;
                 // extract output image
                 var output = example.Value as AbstractImage;
+                // None values are meaningless, so we don't consider them
+                if (output.ContainsNoneValue()){
+                    Program.DEBUG("Returning null from WitnessIdentity --> output contained NONE value");
+                    return null;
+                }
                 if (output == null) { return null; }
                 result[inputState] = new AbstractImage(output);
             }

@@ -25,12 +25,12 @@ namespace Arches
             this.d = 0; // empty set
         }
 
-        public  AbstractValue(AbstractValue ab_val) // We expect this to be a color!
+        public  AbstractValue(AbstractValue ab_val) 
         {
             this.d = ab_val.d;
         }
 
-        public  AbstractValue(int internal_data) // We expect this to NOT be a color!
+        public  AbstractValue(int internal_data) // We expect this to NOT be a color! Should be an AbstractConstant
         {
             this.d = internal_data;
         }
@@ -41,6 +41,10 @@ namespace Arches
             colors.ForEach(color => d |= 1 << color);
         }
 
+        public AbstractValue Clone() {
+            return new AbstractValue(this);
+        }
+
         public bool Allows(int color)
         {
             return ((d >> color) & 1) == 1;
@@ -48,16 +52,10 @@ namespace Arches
 
         public bool ContainsAllColors(AbstractValue ab_val)
         {
-            bool result = true;
-            for (int i = 0; i < 10; i++)
-            {
-                if (ab_val.Allows(i) && !this.Allows(i))
-                {
-                    result = false;
-                    break;
-                }
-            }
-            return result;
+            // the OR will get all possible values
+            // the XOR *should* be 0x0000000000... (NONE) if all the values
+            // were found to belong to this instance of AbstractValue.
+            return ((ab_val.d | this.d) ^ this.d) == AbstractConstants.NONE;
         }
 
 
@@ -96,9 +94,9 @@ namespace Arches
             return new  AbstractValue(a.d & b.d);
         }
 
-        public Boolean IsEmpty()
+        public Boolean IsNone()
         {
-            return this.d == 0;
+            return this.d == AbstractConstants.NONE;
         }
 
         public override bool Equals(object obj)
@@ -173,11 +171,11 @@ namespace Arches
             return ax >= this.x && ax < this.x + this.w && ay >= this.y && ay < this.y + this.h;
         }
 
-        public bool isEmptySet()
+        public bool ContainsNoneValue()
         {
             for (int i = 0; i < this.abstract_data.Length; i++)
             {
-                if (this.abstract_data[i].IsEmpty())
+                if (this.abstract_data[i].IsNone())
                 {
                     return true;
                 }
@@ -185,7 +183,7 @@ namespace Arches
             return false;
         }
 
-        public  AbstractValue getAbstractValueAtPixel(int ax, int ay)
+        public  AbstractValue GetAbstractValueAtPixel(int ax, int ay)
         {
             if (ax < this.x || ay < this.y || ax >= this.x + this.w || ay >= this.y + this.h)
             {
@@ -194,7 +192,7 @@ namespace Arches
             return this.abstract_data[(ay - this.y) * this.w + (ax - this.x)];
         }
 
-        public void setAbstractValueAtPixel(int ax, int ay,  AbstractValue d)
+        public void SetAbstractValueAtPixel(int ax, int ay,  AbstractValue d)
         {
             if (ax < this.x || ay < this.y || ax >= this.x + this.w || ay >= this.y + this.h)
             {
@@ -261,9 +259,9 @@ namespace Arches
             {
                 for (int ax = space.x; ax < space.x + space.w; ax++)
                 {
-                    if (!space.getAbstractValueAtPixel(ax, ay).Allows(candidate.getPixel(ax, ay)))
+                    if (!space.GetAbstractValueAtPixel(ax, ay).Allows(candidate.getPixel(ax, ay)))
                     {
-                        Program.DEBUG(String.Format("space[{0},{1}] = {2}",ax,ay,space.getAbstractValueAtPixel(ax,ay)));
+                        Program.DEBUG(String.Format("space[{0},{1}] = {2}",ax,ay,space.GetAbstractValueAtPixel(ax,ay)));
                         Program.DEBUG(String.Format("candidate[{0},{1}] = {2}",ax,ay,candidate.getPixel(ax,ay)));
                         Program.DEBUG(String.Format("{0},{1}",ax,ay));
 
