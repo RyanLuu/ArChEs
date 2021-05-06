@@ -1,0 +1,9 @@
+orthogonal_recursive        1
+orthogonal_xaxis            1
+orthogonal_rot90            1
+filterColor                 1
+filterRecolor               1
+filterRecolorFlip           1
+multiExample                1
+recolor                     1
+74dd1130                    1
